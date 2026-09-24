@@ -1,0 +1,23 @@
+# The model gateway's shared settings. The model list is not here: it depends on which provider
+# answered at startup, and lives in models.azure.yaml or models.local.yaml. entrypoint.sh picks
+# one, substitutes the names into it, and concatenates it with this file.
+#
+# ADR-010 says the gateway "makes the swap invisible to the labs". That promise is what makes
+# dec:OD-025 cheap: the labs moved from a local model to a hosted one without a handout changing,
+# because the lab text names `aquaflux-default` and `aquaflux-alt` and never names a model, a
+# runtime or a provider.
+
+litellm_settings:
+  drop_params: false          # a lab must see a parameter refused, not silently discarded
+  set_verbose: false
+  json_logs: false
+  # One span per model call to the collector, as a child of the caller's trace when the caller
+  # sent `traceparent`. Which model actually answered is d-04's artefact three, and behind a
+  # gateway this is the only place that fact exists. docker-compose.yml carries the endpoint.
+  callbacks: ["otel"]
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  # The learner's key is the master key in this stack. A real deployment issues virtual keys per
+  # team with a budget each, which is d-01's subject; here there is one learner per stack and a
+  # key database would be one more service to explain.

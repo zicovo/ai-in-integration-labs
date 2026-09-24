@@ -1,0 +1,640 @@
+# The lab stack. One Compose file, profiles per lab.
+#
+# labs/README.md is the registry: every hostname, port and profile here is in a table there, and a
+# handout may not name one that is not. Read it before changing anything in this file.
+#
+# The learner never runs this directly. The dev container starts `workspace`, and
+# `labs/stack/smoke.sh <module-id>` starts the profiles that module needs (ADR-019).
+#
+# Every service carries a network alias equal to its hostname (ADR-020), so nothing on the
+# learner's machine is configured and no host file is edited.
+#
+# One rule holds this file together: apart from `workspace`, no service bind-mounts a host path.
+# Configuration is baked into a small image built from a context directory instead. A bind path in
+# a Compose file is resolved by the client, and the client here is a terminal inside the dev
+# container, so a bind would be sent to the host daemon as a path that exists only in the
+# container. Build contexts are streamed to the daemon and do not have that problem. This is also
+# why nothing in the stack is slow on Windows: only the repository crosses the /mnt/c boundary.
+
+name: aquaflux-labs
+
+x-aquaflux-api: &aquaflux-api
+  build:
+    context: ./aquaflux-api
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost/health').read()"]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+    start_period: 5s
+
+services:
+
+  # The dev container itself: where the learner's terminal runs, which is why service hostnames
+  # resolve there and `localhost` does not mean the stack.
+  #
+  # It deliberately carries NO profile, and that is load-bearing in both directions.
+  #
+  # With a profile, the editor cannot start it: the dev container CLI runs `docker compose up -d`
+  # without naming a service, so a profiled workspace is never selected and opening the folder
+  # fails with "no service selected". Measured, not guessed.
+  #
+  # Without a profile, every `--profile` invocation includes it, so a naive `smoke.sh` would
+  # recreate the very container the learner is typing in, in the middle of a lab. That is why
+  # smoke.sh and aqx resolve a profile to its service names and start those, never the profile
+  # itself. Neither half of this is optional.
+  workspace:
+    build:
+      context: ../../.devcontainer
+    # A real init, so the processes the lab scripts leave behind (an MCP server replaced by the
+    # next registration, a worker killed by kill-worker.sh) are reaped rather than left defunct.
+    # `sleep infinity` as PID 1 reaps nothing. Takes effect the next time the container is created.
+    init: true
+    command: sleep infinity
+    volumes:
+      - ../..:/workspaces/agentic-integration-academy:cached
+      - /var/run/docker.sock:/var/run/docker-host.sock
+      - tls:/etc/aquaflux/tls:ro
+    environment:
+      LAB_GATEWAY_KEY: sk-aquaflux-lab
+      AQUAFLUX_DB: postgres://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux
+      LAB_NADIA_PASSWORD: nadia
+      LAB_SAM_PASSWORD: sam
+      LAB_ELS_PASSWORD: els
+      LAB_AGENT_SECRET: reading-assistant-secret
+      LAB_WORKFLOW_SECRET: meter-check-workflow-secret
+      LAB_COLLECTIONS_AGENT_SECRET: collections-agent-secret
+      # Python does not read the system trust store; requests carries its own bundle. Without
+      # these, curl reaches the identity provider and a learner's script does not, which is a
+      # miserable thing to debug in a lab about tokens. smoke.sh puts the certificate in that
+      # bundle; these make Python look there.
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+    networks:
+      default:
+        aliases: [workspace.aquaflux.internal]
+
+  # No profile, like `workspace`: whatever else is running, the addresses have to resolve and
+  # serve TLS. It is small, and an upstream that is not running simply answers 502.
+  ingress:
+    build:
+      context: ./ingress
+    restart: unless-stopped
+    depends_on:
+      tls:
+        condition: service_completed_successfully
+    volumes:
+      - tls:/etc/aquaflux/tls:ro
+      # The audit store, served read-only at collector.aquaflux.internal:13133/audit/ so that
+      # d-04's evidence has an address a handout can print (Caddyfile, "evidence and state").
+      - audit:/srv/audit:ro
+    ports:
+      # For a browser on the host. It needs a hosts file entry to be useful, which is why the
+      # lab browser exists; this is here for an instructor who wants their own browser.
+      - "8443:443"
+    networks:
+      default:
+        aliases:
+          - aquaflux.internal
+          - idp.aquaflux.internal
+          - mdm.aquaflux.internal
+          - cis.aquaflux.internal
+          - wom.aquaflux.internal
+          - models.aquaflux.internal
+          - tools.aquaflux.internal
+          - policy.aquaflux.internal
+          - approvals.aquaflux.internal
+          - traces.aquaflux.internal
+          - collector.aquaflux.internal
+          - workflow.aquaflux.internal
+          - vectors.aquaflux.internal
+          - showcase.aquaflux.internal
+
+  # ------------------------------------------------------------------ profile: core
+  # The three Aquaflux systems of record. Port 80, so the handouts address them without a port.
+
+  mdm:
+    <<: *aquaflux-api
+    profiles: [core]
+    environment:
+      AQUAFLUX_SYSTEM: mdm
+
+  cis:
+    <<: *aquaflux-api
+    profiles: [core]
+    environment:
+      AQUAFLUX_SYSTEM: cis
+
+  wom:
+    <<: *aquaflux-api
+    profiles: [core]
+    environment:
+      AQUAFLUX_SYSTEM: wom
+      # A token is validated when one is presented and not demanded when one is not. c-02
+      # exercises the tool contract and never mentions identity; d-02 exercises identity.
+      # app/bearer.py explains the choice. Set `required` for a delivery past d-02.
+      AQUAFLUX_BEARER: optional
+      AQUAFLUX_AUDIENCE: wom-api
+      # By service name, not by the public name: this never leaves the network, so it has no
+      # reason to go through the ingress or to need the certificate.
+      AQUAFLUX_JWKS_URL: http://identity:8080/realms/aquaflux/protocol/openid-connect/certs
+
+  # ------------------------------------------------------- profiles: model, retrieval
+  # One database for the whole stack. b-01 and b-02 put their vectors here, and the model gateway
+  # writes its call log here, which is why it starts with the `model` profile too: a-02's
+  # acceptance check asks the learner to find both runs in the gateway log with their token
+  # counts, and without a store behind it that endpoint returns a 500 rather than a log.
+
+  db:
+    image: pgvector/pgvector:pg17
+    profiles: [model, retrieval]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aquaflux
+      POSTGRES_PASSWORD: aquaflux
+      POSTGRES_DB: aquaflux
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aquaflux -d aquaflux"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    networks:
+      default:
+        aliases: [db.aquaflux.internal]
+
+  # ----------------------------------------------------------------- profile: model
+  # The model runtime is never named to a learner. The gateway is, and the gateway is what makes
+  # the runtime swappable: ADR-010 says it "makes the swap invisible to the labs", and
+  # labs/stack/model-gateway/config.yaml is where that promise is kept.
+
+  ollama:
+    image: ollama/ollama:0.12.3
+    profiles: [model]
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    networks:
+      default:
+        aliases: [ollama.aquaflux.internal]
+
+  # Seeds a-02's configuration two. Never named to a learner; see model-seed/app.py.
+  seed:
+    build:
+      context: ./model-seed
+    profiles: [model]
+    restart: unless-stopped
+    # Optional, and absent on a laptop that has not been given a key: Compose treats a missing
+    # env_file marked required:false as empty rather than refusing to start. That is what keeps
+    # dec:OD-025's fallback working with no configuration at all.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      AQUAFLUX_UPSTREAM: http://ollama.aquaflux.internal:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      default:
+        aliases: [seed.aquaflux.internal]
+
+  models:
+    build:
+      context: ./model-gateway
+    profiles: [model]
+    restart: unless-stopped
+    # The provider configuration of dec:OD-025, if the learner has been given one. Missing is
+    # fine and means the local fallback; labs/stack/.env.example says what goes in it.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      LITELLM_MASTER_KEY: sk-aquaflux-lab
+      LITELLM_SALT_KEY: aquaflux-lab-salt
+      # The fallback chain of HANDOFF-LAB.md. Docker Desktop does not pass a GPU through to a
+      # Linux container, so a model runtime inside a container on an M-series Mac is CPU only. A
+      # learner who wants speed runs a model runtime on the host; the gateway finds it there
+      # first and the lab text never changes.
+      AQUAFLUX_HOST_RUNTIME: http://host.docker.internal:11434
+      AQUAFLUX_CONTAINER_RUNTIME: http://ollama.aquaflux.internal:11434
+      AQUAFLUX_MODEL: qwen2.5:3b-instruct
+      AQUAFLUX_EMBED_MODEL: nomic-embed-text
+      DATABASE_URL: postgresql://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux
+      STORE_MODEL_IN_DB: "True"
+      # Spans to the collector, joined to the caller's trace through `traceparent` (d-04,
+      # artefact three: which model actually answered). The product honours W3C Trace Context
+      # on its own; config.yaml turns the callback on. When the telemetry profile is down the
+      # exporter writes a traceback per batch into this container's log, which nobody reads
+      # in a lab, and nothing a learner sees changes: observed on 2026-09-22 while the model
+      # profile ran for an hour before the collector existed.
+      OTEL_EXPORTER: otlp_http
+      OTEL_ENDPOINT: http://collector:4318
+      OTEL_SERVICE_NAME: model-gateway
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4000:4000"
+    depends_on:
+      ollama:
+        condition: service_healthy
+      seed:
+        condition: service_started
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request;urllib.request.urlopen('http://localhost:4000/health/liveliness',timeout=5).read()\""]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 15s
+
+  # -------------------------------------------------------------- profile: identity
+  # d-02's central artefact is a token, so this is the one service in the stack that speaks TLS.
+  # The handout's smoke test is a plain `curl -s https://idp.aquaflux.internal/...` with no flag
+  # to skip verification, and it should stay that way: a lab that teaches people to reach for
+  # --insecure has taught them something. identity/entrypoint.sh generates the certificate into
+  # the shared `tls` volume on first start and smoke.sh installs it into the dev container's
+  # trust store.
+
+  tls:
+    build:
+      context: ./tls
+    restart: "no"
+    volumes:
+      - tls:/etc/aquaflux/tls
+    networks:
+      default:
+        aliases: [tls.aquaflux.internal]
+
+  identity:
+    build:
+      context: ./identity
+    profiles: [identity]
+    restart: unless-stopped
+    depends_on:
+      tls:
+        condition: service_completed_successfully
+    command:
+      - start-dev
+      - --import-realm
+      - --http-enabled=true
+      - --http-port=8080
+      # TLS is terminated at the ingress, so Keycloak has to be told that the world reaches it
+      # over https or it will hand out http URLs in its discovery document and its redirects.
+      - --hostname=https://idp.aquaflux.internal
+      - --hostname-backchannel-dynamic=true
+      - --proxy-headers=xforwarded
+      # The management interface follows the https settings unless told otherwise, and
+      # this image has neither curl nor wget, so the health check speaks plain HTTP
+      # through bash's /dev/tcp. Management is not reachable from outside the network.
+      - --http-management-scheme=http
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    # The Keycloak image ships no curl and no wget, so the check goes through bash's own
+    # /dev/tcp. Health lives on the management port 9000, not on 443.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/localhost/9000 &&
+          printf 'GET /health/ready HTTP/1.0\r\n\r\n' >&3 &&
+          grep -q UP <&3
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 20s
+
+  # -------------------------------------------------------------------- profile: ui
+  # A browser on the lab network, so the addresses a participant types in a browser are the
+  # addresses they type in a terminal. Opt in: `aqx ui`, then open http://localhost:3000.
+
+  browser:
+    build:
+      context: ./browser
+    profiles: [ui]
+    restart: unless-stopped
+    shm_size: 1gb
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      DISPLAY_WIDTH: 1600
+      DISPLAY_HEIGHT: 900
+    volumes:
+      - browser-profile:/config
+      - tls:/etc/aquaflux/tls:ro
+    ports:
+      - "3000:5800"
+    networks:
+      default:
+        aliases: [browser.aquaflux.internal]
+
+  # ----------------------------------------------------------------- profile: tools
+  # The door in front of every MCP server the labs publish. Written for the labs rather than
+  # taken off the shelf; ADR-021 records what was measured and why.
+  #
+  # It reaches the learner's own MCP server at workspace.aquaflux.internal, because in c-02 the
+  # server runs as a process in the dev container on 8850 or 8851 and not as a container. That
+  # is deliberate: the learner edits server.py and re-registers, and a rebuild between those two
+  # would make the loop too slow to iterate in.
+
+  tools:
+    build:
+      context: ./tool-gateway
+    profiles: [tools]
+    restart: unless-stopped
+    environment:
+      # Which policy is active at startup. smoke.sh sets the one each module needs, because
+      # choosing it is setup and setup is never the task.
+      AQUAFLUX_POLICY: wo-tools-1
+      AQUAFLUX_ISSUER: https://idp.aquaflux.internal/realms/aquaflux
+      # By service name: this never leaves the network, so it has no reason to go through the
+      # ingress or to need the certificate. Same split as the work order API.
+      AQUAFLUX_JWKS_URL: http://identity:8080/realms/aquaflux/protocol/openid-connect/certs
+      # The decision point and the notary, for the `aquaflux.tools` policy document (ADR-022).
+      # Both are in the `policy` profile; when they are not running, every call under that
+      # document is refused with a reason that says so, and the `wo-tools-*` documents are
+      # unaffected because they decide in-process.
+      AQUAFLUX_OPA_URL: http://policy:8181
+      AQUAFLUX_APPROVALS_URL: http://approvals:80
+      # d-04. Every decision record is also appended to this file, with the trace id of the
+      # call, and every call is one span sent to the collector. The file is the gateway's own
+      # durable log; whether the collector reads it is the collector's configuration, which is
+      # the lab. app/telemetry.py drops the spans quietly when the telemetry profile is down.
+      AQUAFLUX_DECISION_LOG: /var/log/tool-gateway/decisions.jsonl
+      AQUAFLUX_OTLP: http://collector:4318
+    volumes:
+      - gateway-logs:/var/log/tool-gateway
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:4444/health').read()"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    # No network alias, unlike `db`. The public name `tools.aquaflux.internal` belongs to the
+    # ingress, which terminates TLS and forwards to `tools:4444` in plain HTTP. Giving this
+    # service the public name as well puts two containers behind one DNS name, and a client then
+    # reaches the proxy or the service at random: every other request fails with a TLS version
+    # error, which reads like a certificate problem and is not one. Measured, the hard way.
+
+  # -------------------------------------------------------------- profile: showcase
+  # A real MCP gateway product, beside the stack rather than in its path. Opt in, like the lab
+  # browser: `aqx showcase`. In no lab's profile list, and no handout command goes through it.
+  #
+  # It is here so the room meets the real thing: its console, its registry, its plugin list,
+  # and what it does to the name a learner gave a tool. It is not the door the labs run through,
+  # because it writes no decision record per call and takes no external token as a call
+  # credential; ADR-021 has the measurements. `aqx showcase` registers the curated server behind
+  # it so the debrief can put the two catalogues side by side.
+  #
+  # SQLite in the container's own working directory and fixed secrets are fine: nothing here is
+  # assessed and nothing here is a lab's state, so a restart starting empty is correct and
+  # `aqx showcase` registers the curated server again. (A named volume was tried first: the image
+  # runs as uid 1001 and a fresh volume is root-owned, so the database could not be created and
+  # the readiness probe waited forever.) SSRF protection is off because every address it needs
+  # to reach is a private one.
+  showcase:
+    image: ghcr.io/ibm/mcp-context-forge:v1.0.0-RC-3
+    profiles: [showcase]
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4444"
+      DATABASE_URL: sqlite:///./showcase.db
+      APP_DOMAIN: https://showcase.aquaflux.internal/
+      ALLOWED_ORIGINS: '["https://showcase.aquaflux.internal"]'
+      PLATFORM_ADMIN_EMAIL: admin@aquaflux.internal
+      PLATFORM_ADMIN_PASSWORD: Aquaflux-Showcase-2026
+      PLATFORM_ADMIN_FULL_NAME: Priya (integration engineer)
+      # The product forces a password change on first login by default. That is right for a
+      # product and it is setup for a room, so it is off here.
+      ADMIN_REQUIRE_PASSWORD_CHANGE_ON_BOOTSTRAP: "false"
+      JWT_SECRET_KEY: showcase-only-not-a-secret-aquaflux-labs-2026-0123456789
+      AUTH_ENCRYPTION_SECRET: showcase-only-not-a-secret-aquaflux-labs-2026-9876543210
+      SSRF_PROTECTION_ENABLED: "false"
+      MCPGATEWAY_UI_ENABLED: "true"
+      MCPGATEWAY_ADMIN_API_ENABLED: "true"
+      AUDIT_TRAIL_ENABLED: "true"
+      LOG_LEVEL: INFO
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:4444/health').read()"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+
+  # ---------------------------------------------------------------- profile: policy
+  # The decision point beside the enforcement point (ADR-022). Three services: the policy engine
+  # the learner writes for, the approval service that records who said yes to what, and the
+  # collections agent's tool server, which is the catalogue d-03 and f-01 put behind the gateway.
+  #
+  # The engine starts empty on purpose. The rules are the learner's own policy/ directory and
+  # `aqx policy apply` is how they reach it; smoke.sh applies the module's starting policy so the
+  # stack is pre-wired, and nothing here bind-mounts the learner's files (see the rule at the top
+  # of this file). The image is distroless, with no shell, no curl and no wget, so the health
+  # check is the engine probing itself: `opa eval` with `http.send`, and a query that is undefined
+  # when the answer is not 200, which `--fail` turns into a non-zero exit. The -debug variant has
+  # a busybox, and its busybox has no wget either; measured before settling on this.
+  policy:
+    image: openpolicyagent/opa:1.20.2
+    profiles: [policy]
+    restart: unless-stopped
+    command:
+      - run
+      - --server
+      - --addr=0.0.0.0:8181
+      - --log-level=error
+      # Decision logs to stdout: every query the gateway makes, with its input and result, so
+      # `docker compose logs policy` is a second place to read a decision from.
+      - --set=decision_logs.console=true
+    healthcheck:
+      test: ["CMD", "/opa", "eval", "--fail", "-f", "raw", "r := http.send({\"method\": \"get\", \"url\": \"http://localhost:8181/health\", \"raise_error\": false}); r.status_code == 200"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 3s
+    # No alias: policy.aquaflux.internal belongs to the ingress (see `tools` above).
+
+  approvals:
+    build:
+      context: ./approvals
+    profiles: [policy]
+    restart: unless-stopped
+    environment:
+      AQUAFLUX_ISSUER: https://idp.aquaflux.internal/realms/aquaflux
+      AQUAFLUX_JWKS_URL: http://identity:8080/realms/aquaflux/protocol/openid-connect/certs
+      # An approval token has to be cut for this door and no other. approve.sh asks for the
+      # scope that carries this audience; a console token for the reading assistant is refused.
+      AQUAFLUX_AUDIENCE: approvals-api
+      AQUAFLUX_APPROVAL_TTL_MINUTES: "30"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost/health').read()"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # The collections agent's tools. A container rather than a process in the dev container,
+  # unlike c-02's servers, because no tier of d-03 or f-01 edits it: it is fixture, and a fixture
+  # should survive a closed terminal. The gateway reaches it by service name; smoke.sh registers
+  # it. It publishes both the specific disconnection tool and the generic one, which is d-03's
+  # seeded failure and is documented in collections-tools/server.py.
+  collections-tools:
+    build:
+      context: ./collections-tools
+    profiles: [policy]
+    restart: unless-stopped
+    environment:
+      AQUAFLUX_CIS: http://cis:80
+      AQUAFLUX_WOM: http://wom:80/v4
+    healthcheck:
+      # A GET on a Streamable HTTP endpoint is refused by design; any HTTP answer means alive.
+      test: ["CMD", "python", "-c", "import urllib.request,urllib.error\ntry:\n urllib.request.urlopen('http://localhost:8852/mcp',timeout=3)\nexcept urllib.error.HTTPError:\n pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  # ------------------------------------------------------------- profile: retrieval
+  # The dedicated vector engine b-01's open tier compares against the database (ADR-024). `db`
+  # above is the other half of that comparison and already carries the retrieval profile. The
+  # image has bash and nothing else, so the health check speaks HTTP through /dev/tcp, the way
+  # the identity provider's does.
+  vectors:
+    image: qdrant/qdrant:v1.19.1
+    profiles: [retrieval]
+    restart: unless-stopped
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      # bash, named: CMD-SHELL runs /bin/sh, which in this image is dash and has no /dev/tcp.
+      test:
+        - CMD
+        - bash
+        - -c
+        - exec 3<>/dev/tcp/localhost/6333 && printf 'GET /healthz HTTP/1.0\r\n\r\n' >&3 && grep -q "200 OK" <&3
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    # No alias: vectors.aquaflux.internal belongs to the ingress (see `tools` above).
+
+  # ------------------------------------------------------------- profile: telemetry
+  # The collector and the trace store d-04 reads (ADR-023). The collector's configuration is the
+  # learner's own file, labs/d-04/collector.yaml, baked into the image by `aqx collector apply`,
+  # the way `aqx policy apply` loads the learner's Rego: no bind mount, no live reload, and what
+  # is in the file is what runs. The seeded fault is in that file: the receiver that reads the
+  # gateway's decision file exists and is wired to no pipeline.
+  #
+  # The image has no shell, so there is no Compose health check; smoke.sh curls the health
+  # extension through the ingress, which is what the handout does too.
+  collector:
+    build:
+      # labs/stack/collector/collector.yaml is a staging copy that `aqx collector apply` writes
+      # from whichever file it was given, so the learner's own file is never overwritten by
+      # applying somebody else's. It is not committed.
+      context: ./collector
+      dockerfile_inline: |
+        FROM otel/opentelemetry-collector-contrib:0.161.0
+        COPY collector.yaml /etc/otelcol-contrib/config.yaml
+    profiles: [telemetry]
+    restart: unless-stopped
+    # The image runs as uid 10001 and a fresh named volume is root-owned, so the file exporter
+    # and the checkpoint store could not create their directories (the showcase had the same
+    # problem, HANDOFF-STACK.md). Root inside this one container is the small answer.
+    user: "0:0"
+    volumes:
+      - gateway-logs:/var/log/tool-gateway:ro
+      - audit:/var/lib/aquaflux/audit
+    # No alias: collector.aquaflux.internal belongs to the ingress (see `tools` above). The
+    # agents and the gateway reach it by service name, http://collector:4318.
+
+  # The trace store, memory storage: the debugging view, whose retention is the product's and
+  # is the point the handout makes about retention. It restarts empty and the seed below puts
+  # the history back. OTLP in on 4317 and 4318, the query API and the viewer on 16686.
+  traces:
+    image: jaegertracing/jaeger:2.21.0
+    profiles: [telemetry]
+    restart: unless-stopped
+
+  # Seeds the two hundred past runs, including 88213 and 91044, through the collector and into
+  # the gateway's decision file, once, and again whenever the trace store has lost them. Never
+  # named to a learner; telemetry-seed/app.py says what it plants and why.
+  telemetry-seed:
+    build:
+      context: ./telemetry-seed
+    profiles: [telemetry]
+    restart: unless-stopped
+    environment:
+      AQUAFLUX_OTLP: http://collector:4318
+      AQUAFLUX_TRACES: http://traces:16686
+      AQUAFLUX_DECISION_LOG: /var/log/tool-gateway/decisions.jsonl
+    volumes:
+      - gateway-logs:/var/log/tool-gateway
+    depends_on:
+      - collector
+      - traces
+
+  # -------------------------------------------------------------- profile: workflow
+  # The durable execution engine e-03 runs its meter check in (ADR-025). The CLI image, in the
+  # development mode the handout names: one process, the server and the web interface together,
+  # state in memory. The engine is never restarted during the lab, only the worker is, so memory
+  # is enough and a restart of the stack starts the lab fresh, which is what an instructor wants.
+  #
+  # The worker is not a container. It is a process in the dev container, started by
+  # `labs/stack/start-worker.sh` from the tier directory the learner is editing, for the same
+  # reason c-02's MCP servers are: the learner edits activities.py and restarts the worker, and
+  # an image rebuild in that loop would be setup in the middle of the task. It reaches the engine
+  # by service name, `workflow:7233`, plain gRPC that never leaves the network. The web interface
+  # is the one public address, `https://workflow.aquaflux.internal:8233`, through the ingress.
+  #
+  # The image is distroless (no shell, no curl) and runs as its own user, so the health check is
+  # the CLI asking its own server, which is the one binary the image holds.
+  workflow:
+    image: temporalio/temporal:1.5.1
+    profiles: [workflow]
+    restart: unless-stopped
+    command:
+      - server
+      - start-dev
+      - --ip=0.0.0.0
+      - --port=7233
+      - --ui-port=8233
+      - --log-level=warn
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    # No alias: workflow.aquaflux.internal belongs to the ingress (see `tools` above). The worker
+    # and the run script reach the engine by service name.
+
+  # Every profile HANDOFF-LAB.md planned is built. Their hostnames and ports are in labs/README.md.
+
+volumes:
+  ollama-models:
+  db-data:
+  qdrant-data:
+  tls:
+  browser-profile:
+  # The tool gateway's decision file: written by the gateway, read by the collector when its
+  # configuration says so, seeded with the history by telemetry-seed (d-04).
+  gateway-logs:
+  # The audit store the collector writes and the ingress serves read-only (d-04).
+  audit:
+
+networks:
+  default:
+    name: aquaflux-labs

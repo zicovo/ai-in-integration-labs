@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../../../schemas/corpus-relevance.schema.json
+# Which documents answer questions one to ten. There is no entry for eleven: nothing answers it. A hit is any chunk of a listed document
+# in the top k. Programme content, approved: false. Question nine's expected document is the
+# asset sheet for V-2231 and nothing else: the gate valve and pressure reducing valve pages talk
+# about servicing valves in general and do not answer what this valve needs.
+module: b-02-retrieval-augmented-generation
+approved: false
+relevance:
+  1: [MAN-GV-01]
+  2: [MAN-BP-02]
+  3: [MAN-BP-03]
+  4: [MAN-PRV-02]
+  5: [DIS-PROC-01]
+  6: [TAR-2026-03, DIS-PROC-03]
+  7: [TAR-2026-02]
+  8: [WQ-PROC-02]
+  9: [AST-V-2231]
+  10: [MAN-CL-02]

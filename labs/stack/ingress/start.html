@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Aquaflux lab stack</title>
+<style>
+  :root { color-scheme: light dark; --fg: #1a1a1a; --dim: #5c5c5c; --line: #d8d8d8; --bg: #fdfdfc; --accent: #0b6b62; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e8e8e6; --dim: #9a9a96; --line: #34343a; --bg: #17171a; --accent: #4fd1c5; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 48px 16px; background: var(--bg); color: var(--fg);
+         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; font-weight: 650; letter-spacing: -0.01em; }
+  p.lede { color: var(--dim); margin: 0 0 32px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim);
+       font-weight: 600; margin: 32px 0 10px; }
+  ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  li { border-bottom: 1px solid var(--line); }
+  a { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+      padding: 11px 4px; text-decoration: none; color: inherit; }
+  a:hover, a:focus { background: color-mix(in srgb, var(--accent) 10%, transparent); outline: none; }
+  .name { font-weight: 600; }
+  .addr { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px; color: var(--accent); }
+  .note { color: var(--dim); font-size: 13.5px; flex-basis: 100%; }
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line);
+           color: var(--dim); font-size: 13.5px; }
+  code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Aquaflux lab stack</h1>
+  <p class="lede">You are browsing from inside the stack's network, so these are the same
+  addresses your terminal uses. Not every service is running: each lab starts only what it needs.</p>
+
+  <h2>Control layer</h2>
+  <ul>
+    <li><a href="https://idp.aquaflux.internal/admin/master/console/#/aquaflux"><span class="name">Identity provider</span>
+      <span class="addr">idp.aquaflux.internal</span>
+      <span class="note">Keycloak's administration console. Sign in as <code>admin</code> /
+      <code>admin</code>: that account lives in Keycloak's own <code>master</code> realm, which is why
+      the sign-in page says Keycloak and not Aquaflux. It then opens on the <code>aquaflux</code>
+      realm, with the lab's people and clients. The people (<code>nadia</code>, <code>tom</code>,
+      <code>els</code>, <code>sam</code>, <code>priya</code>) sign in from the terminal, each with
+      their own name as the password; no lab signs them in here. The certificate is trusted, so
+      there is no warning to click past.</span></a></li>
+    <li><a href="https://models.aquaflux.internal:4000"><span class="name">Model gateway</span>
+      <span class="addr">models.aquaflux.internal:4000</span>
+      <span class="note">LiteLLM. Serves aquaflux-default and aquaflux-alt.</span></a></li>
+    <li><a href="https://tools.aquaflux.internal:4444/docs"><span class="name">Tool gateway</span>
+      <span class="addr">tools.aquaflux.internal:4444</span>
+      <span class="note">Written for the labs. The decision log is at /logs, the catalogue at /tools.</span></a></li>
+    <li><a href="https://showcase.aquaflux.internal/admin"><span class="name">Showcase gateway</span>
+      <span class="addr">showcase.aquaflux.internal</span>
+      <span class="note">IBM ContextForge, a real MCP gateway product, for the debrief. Start it with <code>aqx showcase</code>; it prints the sign-in.</span></a></li>
+    <li><a href="https://policy.aquaflux.internal:8181/v1/policies"><span class="name">Policy engine</span>
+      <span class="addr">policy.aquaflux.internal:8181</span>
+      <span class="note">Open Policy Agent. <code>/v1/policies</code> shows what is loaded,
+      <code>/v1/data/aquaflux/tools</code> the package the gateway asks. <code>aqx policy apply policy/</code> loads yours.</span></a></li>
+    <li><a href="https://approvals.aquaflux.internal/approvals"><span class="name">Approval service</span>
+      <span class="addr">approvals.aquaflux.internal</span>
+      <span class="note">Written for the labs. The approvals currently active, with who gave them and for which connection. <code>approve.sh</code> records one.</span></a></li>
+  </ul>
+
+  <h2>Systems of record</h2>
+  <p class="lede">Each opens on a read-only page of what it holds right now. Keep one open beside a
+  lab to see what an agent's call left behind.</p>
+  <ul>
+    <li><a href="https://wom.aquaflux.internal/"><span class="name">Work order management</span>
+      <span class="addr">wom.aquaflux.internal</span>
+      <span class="note">Every work order it holds, with the key it was created under and who asked.
+      The API is at <code>/v4</code>, described at <code>/docs</code>, with
+      <code>/.well-known/oauth-protected-resource</code>.</span></a></li>
+    <li><a href="https://mdm.aquaflux.internal/"><span class="name">Meter data management</span>
+      <span class="addr">mdm.aquaflux.internal</span>
+      <span class="note">Monthly consumption per connection. Connection 4471 doubles in March.</span></a></li>
+    <li><a href="https://cis.aquaflux.internal/"><span class="name">Customer information system</span>
+      <span class="addr">cis.aquaflux.internal</span>
+      <span class="note">The open dunning cases, their notes and what has happened to them. Case 4471
+      is overdue, with a customer note attached.</span></a></li>
+  </ul>
+
+  <h2>Evidence and state</h2>
+  <ul>
+    <li><a href="https://traces.aquaflux.internal:16686"><span class="name">Trace viewer</span>
+      <span class="addr">traces.aquaflux.internal:16686</span>
+      <span class="note">Jaeger. Module d-04. The audit store is beside the collector, at collector.aquaflux.internal:13133/audit/.</span></a></li>
+    <li><a href="https://workflow.aquaflux.internal:8233"><span class="name">Workflow engine</span>
+      <span class="addr">workflow.aquaflux.internal:8233</span>
+      <span class="note">Temporal, development mode. Module e-03. Open a run's history here after the kill.</span></a></li>
+    <li><a href="https://vectors.aquaflux.internal:6333/dashboard"><span class="name">Vector engine</span>
+      <span class="addr">vectors.aquaflux.internal:6333</span>
+      <span class="note">Qdrant. Module b-01's open tier, empty until you fill it.</span></a></li>
+  </ul>
+
+  <footer>
+    This page is at <code>https://aquaflux.internal/</code>. The lab browser runs inside the
+    stack's network, which is why these names resolve here and not in the browser on your own
+    machine. Start a lab with <code>labs/stack/smoke.sh &lt;module&gt;</code> in the editor's
+    terminal. Everything is listed in <code>labs/README.md</code>.
+  </footer>
+</main>
+</body>
+</html>

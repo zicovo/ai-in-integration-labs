@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+# Your model key. Never commit it.
+labs/stack/.env
+labs/stack/collector/collector.yaml
+labs/stack/.worker/

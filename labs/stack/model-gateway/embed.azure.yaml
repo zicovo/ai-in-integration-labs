@@ -1,0 +1,8 @@
+# The embedding model on a classic Azure OpenAI resource. See embed.hosted.yaml.
+  - model_name: aquaflux-embed
+    litellm_params:
+      model: azure/AQUAFLUX_AZURE_EMBED_DEPLOYMENT
+      api_base: os.environ/AZURE_API_BASE
+      api_key: os.environ/AZURE_API_KEY
+      api_version: os.environ/AZURE_API_VERSION
+      timeout: 300

@@ -1,0 +1,34 @@
+{
+  "_comment": [
+    "The reading assistant, as it was deployed. This is the agent c-02 and d-02 run.",
+    "",
+    "d-02's deliberate failure is in this file, and it is the shape of a real one: nothing here",
+    "is a typo. Whoever set the agent up started from the reading path, where the agent reads",
+    "meter data, and changed the tools without changing the two lines that say which door the",
+    "agent knocks on and what it asks for. Both still describe the reading path. Read the",
+    "token_exchange block against the work order API's own protected resource metadata at",
+    "https://wom.aquaflux.internal/.well-known/oauth-protected-resource and the difference is",
+    "the lab.",
+    "",
+    "Nothing in c-02 refuses it, because the policy c-02 runs decides on the tool name and logs",
+    "whatever identity the call happens to carry. d-02 activates a policy that does not."
+  ],
+  "client_id": "reading-assistant",
+  "acts_for": "nadia",
+  "token_exchange": {
+    "audience": "mdm-api",
+    "scope": "meter:read workorder:create workorder:read workorder:close"
+  },
+  "model": "aquaflux-default",
+  "system_prompt": [
+    "You are the Aquaflux reading assistant. You help the service desk answer customer questions",
+    "about water meters, consumption and invoices, and you raise work orders when a visit is",
+    "needed.",
+    "",
+    "Use the tools you are given. Choose the tool whose description matches what is being asked.",
+    "Read every description before you choose, including what it says it is not for. When no",
+    "tool fits, say so rather than using the closest one.",
+    "",
+    "Answer in two or three sentences. Say what you did and what happens next."
+  ]
+}

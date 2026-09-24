@@ -1,0 +1,38 @@
+{
+  "name": "AI in Integration, lab stack",
+  "dockerComposeFile": ["../labs/stack/docker-compose.yml"],
+  "service": "workspace",
+  "workspaceFolder": "/workspaces/agentic-integration-academy",
+  "remoteUser": "vscode",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false
+    }
+  },
+
+  "forwardPorts": [3000, 4000, 8233, 8443, 16686],
+  "portsAttributes": {
+    "3000": { "label": "Lab browser", "onAutoForward": "silent" },
+    "4000": { "label": "Model gateway", "onAutoForward": "silent" },
+    "8233": { "label": "Workflow engine", "onAutoForward": "silent" },
+    "8443": { "label": "Identity provider", "onAutoForward": "silent" },
+    "16686": { "label": "Trace viewer", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "labs/stack/bin/aqx welcome",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "redhat.vscode-yaml",
+        "tsandall.opa"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.eol": "\n"
+      }
+    }
+  }
+}

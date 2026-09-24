@@ -1,0 +1,39 @@
+# What an operator does when the contract is wrong.
+#
+# Same generated catalogue as wo-tools-1, same single name for six actions. The difference is
+# that this one has noticed. It cannot tell a meter check from a disconnection, because the
+# catalogue does not let it, so it holds every work order the agent proposes for a human.
+#
+# Nothing gets cut off by accident under this policy, and nothing gets done either: the service
+# desk now approves a meter check by hand, which is the work the agent was supposed to save. It
+# is the honest answer to a catalogue that cannot be governed, and it is why the fix belongs in
+# the contract. Worth showing in the debrief between the two runs.
+#
+# c-02 does not name this policy. It exists because the lab's argument is that there are only
+# two ways out of a generic catalogue, and a learner should be able to see both.
+
+id: wo-tools-2
+version: "2"
+description: >
+  The reading assistant may propose a work order of any type, and a human decides every one,
+  because no rule can tell which type was proposed.
+identity: optional
+default: deny
+rules:
+  - tool: create_work_order
+    agents: [reading-assistant]
+    decision: hold
+    approver: sam
+    reason: >
+      this catalogue has one name for six actions, so there is no rule that allows a meter check
+      and refuses a disconnection. Everything waits for a person.
+
+  - tool: get_*
+    agents: [reading-assistant]
+    decision: allow
+    reason: reading is harmless
+
+  - tool: list_*
+    agents: [reading-assistant]
+    decision: allow
+    reason: reading is harmless

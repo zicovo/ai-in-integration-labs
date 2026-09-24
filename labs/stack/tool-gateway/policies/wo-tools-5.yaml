@@ -1,0 +1,46 @@
+# wo-tools-4, with e-03's workflow as a second agent.
+#
+# e-03 runs the meter check as a durable workflow. The workflow is not the reading assistant: it
+# is a different piece of software with a different failure mode, and until 2026-09-24 it
+# borrowed the reading assistant's client, so the gateway log and the work order named the chat
+# agent for something the workflow did. It now has its own client in the realm,
+# `meter-check-workflow`, and this document admits it to the two tools it calls, on the same
+# terms as the reading assistant: acting for a person, with a token addressed to the work order
+# API and carrying only the scope the tool needs.
+#
+# d-02 reads wo-tools-4 and is not changed by this. smoke.sh loads this one for e-03 only.
+
+id: wo-tools-5
+version: "1"
+description: >
+  wo-tools-4, with the meter check workflow admitted beside the reading assistant, each under its
+  own identity.
+identity: required
+audience: wom-api
+default: deny
+rules:
+  - tool: create_meter_check_work_order
+    agents: [reading-assistant]
+    scope: workorder:create
+    decision: allow
+    reason: the reading assistant is acting for a person who may raise a meter check
+
+  - tool: create_meter_check_work_order
+    agents: [meter-check-workflow]
+    scope: workorder:create
+    decision: allow
+    reason: the meter check workflow is acting for a person who may raise a meter check
+
+  - tool: get_work_order_status
+    agents: [reading-assistant, meter-check-workflow]
+    scope: workorder:read
+    decision: allow
+    reason: reading the state of a work order is harmless
+
+  - tool: create_disconnection_work_order
+    agents: [reading-assistant]
+    scope: workorder:create
+    decision: hold
+    approver: sam
+    action: disconnection
+    reason: cutting off a supply is held for the collections team lead

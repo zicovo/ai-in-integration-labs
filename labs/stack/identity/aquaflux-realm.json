@@ -1,0 +1,582 @@
+{
+  "realm": "aquaflux",
+  "displayName": "Aquaflux",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "name": "service-desk",
+        "description": "Reads any customer record, creates work orders, may not approve a disconnection"
+      },
+      {
+        "name": "field-technician",
+        "description": "Reads and closes own work orders, reads manuals"
+      },
+      {
+        "name": "collections-officer",
+        "description": "Reads payment and dunning state, may propose a disconnection, may not execute one"
+      },
+      {
+        "name": "collections-team-lead",
+        "description": "Approves a disconnection or reconnection after the legal procedure has run"
+      },
+      {
+        "name": "integration-engineer",
+        "description": "Owns the API management layer, the message bus and the control layer for agents"
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "nadia",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Nadia",
+      "lastName": "Haddad",
+      "email": "nadia@aquaflux.internal",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "nadia",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "service-desk"
+      ]
+    },
+    {
+      "username": "tom",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Tom",
+      "lastName": "Verbeeck",
+      "email": "tom@aquaflux.internal",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "tom",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "field-technician"
+      ]
+    },
+    {
+      "username": "els",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Els",
+      "lastName": "Dewit",
+      "email": "els@aquaflux.internal",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "els",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "collections-officer"
+      ]
+    },
+    {
+      "username": "sam",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Sam",
+      "lastName": "Okonkwo",
+      "email": "sam@aquaflux.internal",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "sam",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "collections-officer",
+        "collections-team-lead"
+      ]
+    },
+    {
+      "username": "priya",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Priya",
+      "lastName": "Raman",
+      "email": "priya@aquaflux.internal",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "priya",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "integration-engineer"
+      ]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "basic",
+      "description": "Core claims every token needs: the subject and when the user authenticated.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-sub-mapper",
+          "consentRequired": false,
+          "config": {
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "auth_time",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "AUTH_TIME",
+            "claim.name": "auth_time",
+            "jsonType.label": "long",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "description": "Who the person is, in the claims a log can be read by.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "username",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "given name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "firstName",
+            "claim.name": "given_name",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "family name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "lastName",
+            "claim.name": "family_name",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "full name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-full-name-mapper",
+          "consentRequired": false,
+          "config": {
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "email",
+      "description": "The address, so a person in a log can be contacted.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "email",
+            "claim.name": "email",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "roles",
+      "description": "What the person may do standing still, before any delegation.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "workorder:create",
+      "description": "Create a work order",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "wom-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "wom-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "workorder:read",
+      "description": "Read a work order",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "wom-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "wom-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "workorder:close",
+      "description": "Close a work order",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "wom-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "wom-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "meter:read",
+      "description": "Read meter readings. The reading assistant's original path, and the one whose settings get copied.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "mdm-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "mdm-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "approval:decide",
+      "description": "Record an approval as yourself, at the approval service.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "approvals-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "approvals-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "service-desk",
+      "name": "Aquaflux service desk",
+      "description": "What Nadia signs in to. Public, because it is a front end. Its tokens name the three agents in their audience (the reading assistant, the collections agent and the meter check workflow), which is what lets those agents exchange them and no other.",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:*",
+        "https://idp.aquaflux.internal/*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "basic",
+        "profile",
+        "email",
+        "roles"
+      ],
+      "optionalClientScopes": [
+        "workorder:create",
+        "workorder:read",
+        "workorder:close",
+        "meter:read",
+        "approval:decide"
+      ],
+      "protocolMappers": [
+        {
+          "name": "reading-assistant-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "reading-assistant",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "collections-agent-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "collections-agent",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "meter-check-workflow-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "meter-check-workflow",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "reading-assistant",
+      "name": "Reading assistant",
+      "description": "The agent. Confidential, with a credential of its own, so that it has an identity rather than borrowing Nadia's.",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "reading-assistant-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "attributes": {
+        "standard.token.exchange.enabled": "true"
+      },
+      "defaultClientScopes": [
+        "basic",
+        "profile",
+        "email",
+        "roles"
+      ],
+      "optionalClientScopes": [
+        "workorder:create",
+        "workorder:read",
+        "workorder:close",
+        "meter:read"
+      ]
+    },
+    {
+      "clientId": "meter-check-workflow",
+      "name": "Meter check workflow",
+      "description": "e-03's durable workflow. It acts for Nadia the way the reading assistant does, with an identity of its own, so the gateway log, the work order and the trace name the workflow and not the chat agent it grew out of.",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "meter-check-workflow-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "attributes": {
+        "standard.token.exchange.enabled": "true"
+      },
+      "defaultClientScopes": [
+        "basic",
+        "profile",
+        "email",
+        "roles"
+      ],
+      "optionalClientScopes": [
+        "workorder:create",
+        "workorder:read",
+        "workorder:close",
+        "meter:read"
+      ]
+    },
+    {
+      "clientId": "wom-api",
+      "name": "Aquaflux work order API",
+      "description": "The resource. It exists so that a token can be addressed to it and to nothing else.",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "secret": "wom-api-secret"
+    },
+    {
+      "clientId": "mdm-api",
+      "name": "Aquaflux meter data API",
+      "description": "The other resource. It is here so that a token addressed to the wrong system is a thing that can happen.",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "secret": "mdm-api-secret"
+    },
+    {
+      "clientId": "collections-agent",
+      "name": "Aquaflux collections agent",
+      "description": "The agent that runs the dunning steps for overdue accounts, acting for Els or Sam. d-03 and f-01 run it. Its token is exchanged from the collections officer's own.",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "collections-agent-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "attributes": {
+        "standard.token.exchange.enabled": "true"
+      },
+      "defaultClientScopes": [
+        "basic",
+        "profile",
+        "email",
+        "roles"
+      ],
+      "optionalClientScopes": [
+        "workorder:create",
+        "workorder:read",
+        "workorder:close",
+        "meter:read"
+      ]
+    },
+    {
+      "clientId": "approvals-api",
+      "name": "Aquaflux approval service",
+      "description": "The approval service, as an audience. A token that approves has to be addressed here.",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "secret": "approvals-api-secret"
+    }
+  ]
+}

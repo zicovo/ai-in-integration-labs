@@ -1,0 +1,25 @@
+# aquaflux.tools, in log-only mode.
+#
+# The same engine, the same package, the same rules the learner loaded. The difference is what
+# the gateway does with the answer: it records the decision on the call's one log line, with
+# `enforced: false`, and forwards the call whatever the decision was. A hold spends no approval
+# and a deny stops nothing.
+#
+# This is the shadow run a team does before switching a policy on: a week of "what would it have
+# refused" against real traffic, read from the log, before anything is refused. d-03's instructor
+# note asked for it; no handout uses it yet. Switch with `aqx policy mode log-only` and back with
+# `aqx policy mode enforce`. Identity is checked the same way in both, and a tool nobody
+# publishes is refused in both, because neither is the policy's decision.
+
+id: aquaflux.tools.log-only
+version: "opa"
+engine: opa
+opa_url: http://policy:8181
+opa_package: aquaflux/tools
+enforcement: log-only
+description: >
+  Every call is decided by the policy engine and the decision is logged, not enforced. The call
+  goes through; the log line says what would have happened.
+identity: optional
+default: deny
+rules: []

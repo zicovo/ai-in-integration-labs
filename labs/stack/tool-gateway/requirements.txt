@@ -1,0 +1,11 @@
+# mcp 2.x requires a newer pydantic than the Aquaflux stand-ins pin, which is why this image has
+# its own requirements file rather than sharing theirs.
+fastapi==0.118.0
+uvicorn==0.37.0
+pydantic==2.13.5
+pyjwt[crypto]==2.10.1
+pyyaml==6.0.2
+mcp==2.2.0
+httpx==0.28.1
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-http==1.44.0

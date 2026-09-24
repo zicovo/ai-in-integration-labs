@@ -1,0 +1,220 @@
+# yaml-language-server: $schema=../../../schemas/corpus-labels.schema.json
+module: b-02-retrieval-augmented-generation
+approved: false
+_comment:
+- Hand-scored faithfulness labels for three questions, to calibrate the judge in score.py.
+- Each claim is one the grounded step returned on 2026-09-22 on the hosted model, with the
+- passage it cited, copied here so the judge scores the same text the hand did. `supported`
+- is the hand's verdict; `note` says why, and where the hand expects the judge to disagree.
+- Programme content, reviewed like a module.
+labels:
+- question: 1
+  text: How often do we grease the spindle of a gate valve?
+  claims:
+  - text: The spindle is greased every twelve months, unless the valve sits in a chamber that floods.
+    cited: MAN-GV-01 v2#2
+    passage_text: 'The spindle is greased at the same interval as the inspection, every twelve months,
+      unless
+
+      the valve sits in a chamber that floods. Valves in flooding chambers are greased every six
+
+      months, because water displaces the grease and the spindle thread corrodes. Use the lithium
+
+      grease listed on the materials page, applied to the thread with the valve half open, and wipe
+
+      the excess so that grit does not collect on it.'
+    supported: true
+    note: Word for word in the passage.
+  - text: Valves in flooding chambers are greased every six months.
+    cited: MAN-GV-01 v2#2
+    passage_text: 'The spindle is greased at the same interval as the inspection, every twelve months,
+      unless
+
+      the valve sits in a chamber that floods. Valves in flooding chambers are greased every six
+
+      months, because water displaces the grease and the spindle thread corrodes. Use the lithium
+
+      grease listed on the materials page, applied to the thread with the valve half open, and wipe
+
+      the excess so that grit does not collect on it.'
+    supported: true
+    note: Stated in the passage's second sentence.
+- question: 3
+  text: What pressure test is required after replacing a booster pump seal?
+  claims:
+  - text: After every seal replacement, a pressure test is required.
+    cited: MAN-BP-03 v1#1
+    passage_text: 'After every seal replacement, every casing repair, and every manifold or non return
+      valve
+
+      replacement. A test is not required after a filter change, a drive reset, or a coupling
+
+      alignment that did not open the hydraulic path.'
+    supported: true
+    note: Supported. The chunk says 'a test'; the document is the pressure testing page and its heading
+      says so. A judge reading the chunk alone may say the word pressure is missing, which is the chunk
+      losing the context that made it mean something, not the model inventing.
+  - text: The test involves isolating the repaired pump, filling and venting the casing, raising pressure
+      to the test pressure stated on the station's pressure test sheet, and holding it for thirty minutes.
+    cited: MAN-BP-03 v1#2
+    passage_text: 'Isolate the repaired pump at its suction and discharge valves. Fill and vent the casing.
+      Raise
+
+      the pressure with the hand pump to the test pressure stated on the station''s pressure test
+
+      sheet, which is set per station from the zone''s maximum operating pressure, and hold it for
+
+      thirty minutes. The test passes if the pressure does not fall and no water is visible at the
+
+      seal, the casing joint or the manifold connections.'
+    supported: true
+    note: Every step and the thirty minutes are in the passage.
+  - text: The test passes if the pressure does not fall and no water is visible at the seal, the casing
+      joint, or the manifold connections.
+    cited: MAN-BP-03 v1#2
+    passage_text: 'Isolate the repaired pump at its suction and discharge valves. Fill and vent the casing.
+      Raise
+
+      the pressure with the hand pump to the test pressure stated on the station''s pressure test
+
+      sheet, which is set per station from the zone''s maximum operating pressure, and hold it for
+
+      thirty minutes. The test passes if the pressure does not fall and no water is visible at the
+
+      seal, the casing joint or the manifold connections.'
+    supported: true
+    note: Word for word.
+  - text: Do not return the pump to duty until it has passed the test and the result is recorded.
+    cited: MAN-BP-01 v1#4
+    passage_text: 'A pressure test is required after any repair that opened the pump casing or the manifold.
+
+      The test is described on the pressure testing page; do not return the pump to duty until it
+
+      has passed and the result is recorded.'
+    supported: true
+    note: Word for word.
+- question: 9
+  text: What does valve V-2231 need at its next service?
+  claims:
+  - text: Replace the diaphragm and the pilot seals at the next service, because the valve is five years
+      from installation.
+    cited: MAN-PRV-01 v1#3
+    passage_text: 'Replace the diaphragm and the pilot seals. Some valves are on a shorter interval because
+      of
+
+      their duty; the asset sheet for the individual valve is the authority and lists what is due
+
+      at its next service.'
+    supported: false
+    note: Not supported. The cited passage is the general five year rule and says nothing about V-2231
+      or when it was installed; the reason is the model's. The action itself is on the asset sheet, which
+      the claim did not cite.
+  - text: Clean the strainer at the next service.
+    cited: AST-V-2231 v1#0
+    passage_text: 'Register extract, generated from the asset register on 2026-05-13. One sheet per asset.
+      The
+
+      register is the authority for the values below; the maintenance manual pages are the authority
+
+      for how the work is done.
+
+
+      | Field | Value |
+
+      | --- | --- |
+
+      | ASSET_CODE | V-2231 |
+
+      | ASSET_CLASS | PRV |
+
+      | ASSET_TYPE | PRV-150-P, pilot operated |
+
+      | LOCATION | CH-0417, Brugse Steenweg |
+
+      | ZONE_BOUNDARY | HPZ-3 to LPZ-7 |
+
+      | DN | 150 |
+
+      | INSTALLED | 2019-09-12 |
+
+      | KEY_CAP | 32 sq |
+
+      | P_IN_TYP | 6.8 bar |
+
+      | P_OUT_SET | 3.2 bar |
+
+      | P_OUT_TOL | 0.2 bar |
+
+      | LAST_SET_CHANGE | 2024-11-03, WO 71822 |
+
+      | SVC_2025-05-14 | WO 79310, 6M, strainer dP 0.15 bar |
+
+      | SVC_2025-11-06 | WO 84077, 12M, strainer cleaned, diaphragm no creep |
+
+      | SVC_2026-05-12 | WO 89905, 6M, strainer dP 0.35 bar, pilot union weeping |
+
+      | NEXT_DUE | 2026-11-06 |
+
+      | NEXT_INTERVAL | 12M; strainer 6M (rising dP) |
+
+      | NEXT_ACTIONS | DIAPHRAGM_REPLACE; PILOT_SEALS_REPLACE (5Y from INSTALLED); STRAINER_CLEAN; PILOT_UNION_REPLACE
+      |
+
+      | FLAGS | FLOODING_CHAMBER |'
+    supported: true
+    note: 'Supported: NEXT_ACTIONS lists STRAINER_CLEAN and NEXT_DUE gives the date. A judge may refuse
+      to read a register code as a sentence; a technician reads it without difficulty.'
+  - text: Replace the pilot union at the next service.
+    cited: AST-V-2231 v1#0
+    passage_text: 'Register extract, generated from the asset register on 2026-05-13. One sheet per asset.
+      The
+
+      register is the authority for the values below; the maintenance manual pages are the authority
+
+      for how the work is done.
+
+
+      | Field | Value |
+
+      | --- | --- |
+
+      | ASSET_CODE | V-2231 |
+
+      | ASSET_CLASS | PRV |
+
+      | ASSET_TYPE | PRV-150-P, pilot operated |
+
+      | LOCATION | CH-0417, Brugse Steenweg |
+
+      | ZONE_BOUNDARY | HPZ-3 to LPZ-7 |
+
+      | DN | 150 |
+
+      | INSTALLED | 2019-09-12 |
+
+      | KEY_CAP | 32 sq |
+
+      | P_IN_TYP | 6.8 bar |
+
+      | P_OUT_SET | 3.2 bar |
+
+      | P_OUT_TOL | 0.2 bar |
+
+      | LAST_SET_CHANGE | 2024-11-03, WO 71822 |
+
+      | SVC_2025-05-14 | WO 79310, 6M, strainer dP 0.15 bar |
+
+      | SVC_2025-11-06 | WO 84077, 12M, strainer cleaned, diaphragm no creep |
+
+      | SVC_2026-05-12 | WO 89905, 6M, strainer dP 0.35 bar, pilot union weeping |
+
+      | NEXT_DUE | 2026-11-06 |
+
+      | NEXT_INTERVAL | 12M; strainer 6M (rising dP) |
+
+      | NEXT_ACTIONS | DIAPHRAGM_REPLACE; PILOT_SEALS_REPLACE (5Y from INSTALLED); STRAINER_CLEAN; PILOT_UNION_REPLACE
+      |
+
+      | FLAGS | FLOODING_CHAMBER |'
+    supported: true
+    note: 'Supported: PILOT_UNION_REPLACE is in NEXT_ACTIONS, and the service history says why.'

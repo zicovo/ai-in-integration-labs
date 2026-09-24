@@ -1,0 +1,33 @@
+# The answering step's settings. answer.py and score.py read this; naive.py reads none of it,
+# which is the point of naive.py.
+
+retrieval:
+  table: chunks
+  k: 5                      # passages handed to the model
+  candidates: 20            # depth of each retriever before fusion
+  rrf_k: 60
+
+# The coverage check, taken before the model is called, on evidence the model never sees.
+#
+# Measured on 2026-09-22 with nomic-embed-text over the twenty documents: every question the
+# corpus answers has a best vector similarity between 0.81 and 0.91, the identifier question
+# (nine) 0.62, and the out-of-corpus question (eleven) 0.68. So the rule is: answer when the best
+# similarity among the fused candidates is at least min_similarity, or when the lexical retriever
+# matched a code from the question exactly (which is how question nine gets through). Move
+# min_similarity down to 0.67 and question eleven starts being answered: that is the worked
+# tier's last step. There is no reranker in this stack; `reranker: none` is here so the shape of
+# the decision is visible.
+coverage:
+  min_similarity: 0.75
+  accept_identifier_match: true
+  reranker: none
+  leads: 3                  # nearest documents returned with a refusal
+
+refusal: >
+  The manuals and procedures I can read do not answer this. The nearest documents are listed;
+  if the answer should be in one of them, tell the document owner.
+
+model:
+  name: aquaflux-default
+  temperature: 0
+  judge: aquaflux-default   # the faithfulness judge in score.py. A second model would be better.

@@ -1,0 +1,30 @@
+# The rule Aquaflux could write against a generated catalogue.
+#
+# c-02 registers this one with `generated/`, and it is the whole of the lab's second half. The
+# catalogue has one name for creating a work order, so the only rule anybody can write is a rule
+# on that name, and a rule on that name allows every work order type Aquaflux has: an inspection,
+# a meter check and a disconnection are one thing as far as this policy can tell.
+#
+# Nothing here is wrong. That is the point. The failure is not in the policy, and no amount of
+# care in writing this file would prevent it, because the catalogue gave it nothing to say.
+
+id: wo-tools-1
+version: "1"
+description: The reading assistant may create work orders.
+identity: optional
+default: deny
+rules:
+  - tool: create_work_order
+    agents: [reading-assistant]
+    decision: allow
+    reason: the reading assistant may create work orders
+
+  - tool: get_*
+    agents: [reading-assistant]
+    decision: allow
+    reason: reading is harmless
+
+  - tool: list_*
+    agents: [reading-assistant]
+    decision: allow
+    reason: reading is harmless

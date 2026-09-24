@@ -1,0 +1,136 @@
+{
+  "policies": {
+    "Certificates": {
+      "ImportEnterpriseRoots": true,
+      "Install": [
+        "/etc/aquaflux/tls/ca.crt"
+      ]
+    },
+    "DisplayBookmarksToolbar": "always",
+    "Bookmarks": [
+      {
+        "Title": "Start here",
+        "URL": "https://aquaflux.internal/",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Work orders",
+        "URL": "https://wom.aquaflux.internal/",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Customers",
+        "URL": "https://cis.aquaflux.internal/",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Meter data",
+        "URL": "https://mdm.aquaflux.internal/",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Identity",
+        "URL": "https://idp.aquaflux.internal/admin/master/console/#/aquaflux",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Model gateway",
+        "URL": "https://models.aquaflux.internal:4000",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Tool gateway",
+        "URL": "https://tools.aquaflux.internal:4444/docs",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Policy",
+        "URL": "https://policy.aquaflux.internal:8181/v1/policies",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Approvals",
+        "URL": "https://approvals.aquaflux.internal/approvals",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Traces",
+        "URL": "https://traces.aquaflux.internal:16686",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Workflows",
+        "URL": "https://workflow.aquaflux.internal:8233",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Vectors",
+        "URL": "https://vectors.aquaflux.internal:6333/dashboard",
+        "Placement": "toolbar"
+      },
+      {
+        "Title": "Work order API",
+        "URL": "https://wom.aquaflux.internal/docs",
+        "Placement": "toolbar",
+        "Folder": "APIs"
+      },
+      {
+        "Title": "Customer API",
+        "URL": "https://cis.aquaflux.internal/docs",
+        "Placement": "toolbar",
+        "Folder": "APIs"
+      },
+      {
+        "Title": "Meter data API",
+        "URL": "https://mdm.aquaflux.internal/docs",
+        "Placement": "toolbar",
+        "Folder": "APIs"
+      }
+    ],
+    "Homepage": {
+      "URL": "https://aquaflux.internal/|https://wom.aquaflux.internal/|https://cis.aquaflux.internal/|https://mdm.aquaflux.internal/",
+      "StartPage": "homepage",
+      "Locked": false
+    },
+    "DisableAppUpdate": true,
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "DisableProfileImport": true,
+    "DisableFirefoxAccounts": true,
+    "DisableSetDesktopBackground": true,
+    "DontCheckDefaultBrowser": true,
+    "NoDefaultBookmarks": true,
+    "OfferToSaveLogins": false,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "PromptForDownloadLocation": false,
+    "UserMessaging": {
+      "WhatsNew": false,
+      "ExtensionRecommendations": false,
+      "FeatureRecommendations": false
+    },
+    "Preferences": {
+      "browser.sessionstore.resume_from_crash": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.aboutwelcome.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.warnOnQuit": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.tabs.warnOnClose": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "datareporting.policy.dataSubmissionEnabled": {
+        "Value": false,
+        "Status": "locked"
+      }
+    }
+  }
+}

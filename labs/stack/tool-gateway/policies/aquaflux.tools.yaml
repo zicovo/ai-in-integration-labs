@@ -1,0 +1,27 @@
+# The policy engine decides.
+#
+# d-03 activates this one, and every lab after it that has the `policy` profile. It holds no
+# rules of its own: every call is put to Open Policy Agent as data.aquaflux.tools.decision, with
+# the caller, the tool, the arguments and the active approvals as input. The rules are whatever
+# `aqx policy apply` last loaded, which is the learner's own policy/ directory.
+#
+# The version in the log is the hash of what the engine currently holds, so a log line names the
+# exact text that decided it. It changes every time the learner pushes a change, which is what a
+# version is for.
+#
+# Identity is optional here, and the audience is not checked by the gateway, because d-03 and
+# f-01 are about the decision and the token's claims are in the input for a policy that wants
+# them. A delivery that wants d-02's checks kept on this path adds them to the Rego, where they
+# belong once there is a policy engine to hold them.
+
+id: aquaflux.tools
+version: "opa"
+engine: opa
+opa_url: http://policy:8181
+opa_package: aquaflux/tools
+description: >
+  Every call is decided by the policy engine, against whatever policy/ currently holds. The
+  gateway enforces; it does not decide.
+identity: optional
+default: deny
+rules: []

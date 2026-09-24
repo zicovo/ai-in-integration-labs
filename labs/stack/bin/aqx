@@ -1,0 +1,502 @@
+#!/usr/bin/env bash
+# aqx: the lab stack's small wrapper. On the path inside the dev container.
+#
+# It exists so that a handout can say one short thing rather than a Compose incantation, and so
+# that when a component underneath is swapped the handout does not change. f-01 names it once.
+
+set -euo pipefail
+
+STACK_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+COMPOSE=(docker compose -f "$STACK_DIR/docker-compose.yml")
+
+# VS Code's Dev Containers extension writes a credential helper into ~/.docker/config.json that
+# answers only while an editor window is attached. With the window closed, or with the container
+# brought up by the devcontainer CLI after VS Code once attached, every image build fails on
+# "error getting credentials", which reads like a broken stack. The helper stays on the path and
+# fails when called, so it is asked, not looked for. Every image here is public and needs no
+# credentials, so when the helper does not answer, build with an empty configuration.
+creds="$(sed -n 's/.*"credsStore" *: *"\([^"]*\)".*/\1/p' "${DOCKER_CONFIG:-$HOME/.docker}/config.json" 2>/dev/null || true)"
+if [ -n "$creds" ] && ! timeout 5 "docker-credential-$creds" list </dev/null >/dev/null 2>&1; then
+  export DOCKER_CONFIG="${TMPDIR:-/tmp}/aquaflux-docker-config"
+  mkdir -p "$DOCKER_CONFIG" && [ -s "$DOCKER_CONFIG/config.json" ] || echo '{}' >"$DOCKER_CONFIG/config.json"
+fi
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+
+  welcome)
+    cat <<'EOF'
+
+  AI in Integration, lab stack
+
+  The stack is not running yet. It comes up per lab, so you start only what you need:
+
+      labs/stack/smoke.sh a-02
+
+  That starts the services module a-02 uses and checks that everything the handout
+  promises is true. If it fails, that is the stack's problem, not yours: ask the
+  instructor.
+
+  Addresses. Everything in the stack answers on its own name, over https:
+
+      https://aquaflux.internal            the start page, which lists the rest
+      https://wom.aquaflux.internal        the work order system, read only; its API is at /v4
+      https://idp.aquaflux.internal        the identity provider
+
+  Those work from this terminal. To reach them in a browser, start the lab browser,
+  which sits on the same network and already trusts the lab's certificate authority:
+
+      aqx ui
+
+  Then open http://localhost:3000. Every handout uses the aquaflux.internal names and
+  nothing else, so the address you read is the address you type, in both places.
+
+  labs/README.md lists every service, address and fixture. aqx help lists the commands.
+
+EOF
+    ;;
+
+  up)
+    [ $# -gt 0 ] || { echo "usage: aqx up <profile>..." >&2; exit 2; }
+    # Services by name, never the profile: `workspace` carries no profile, so a `--profile ... up`
+    # would include it and recreate the container you are typing in. docker-compose.yml explains
+    # why it cannot simply be given one.
+    args=(); for p in "$@"; do args+=(--profile "$p"); done
+    services="$("${COMPOSE[@]}" "${args[@]}" config --services | grep -vx workspace | tr '\n' ' ')"
+    # shellcheck disable=SC2086
+    "${COMPOSE[@]}" up -d --wait $services
+    ;;
+
+  down)
+    services="$("${COMPOSE[@]}" --profile core --profile model --profile identity --profile tools \
+      --profile policy --profile telemetry --profile retrieval --profile workflow --profile showcase \
+      config --services | grep -vx workspace | tr '\n' ' ')"
+    # shellcheck disable=SC2086
+    "${COMPOSE[@]}" stop $services
+    ;;
+
+  ps)
+    "${COMPOSE[@]}" ps --all
+    ;;
+
+  logs)
+    "${COMPOSE[@]}" logs -f "$@"
+    ;;
+
+  ui)
+    # The browser on the lab network. Opt in, because it costs about a gigabyte of memory and
+    # most labs never need it.
+    "${COMPOSE[@]}" --profile ui up -d --wait browser
+    cat <<'EOF'
+
+  The lab browser is up.
+
+      http://localhost:3000
+
+  Open that in your own browser. Inside it, the stack's addresses work as they do in this
+  terminal: https://idp.aquaflux.internal, https://wom.aquaflux.internal/v4, and the rest. The
+  start page lists them, and the certificate is already trusted, so the identity provider has no
+  warning to click past.
+
+  Stop it again with: aqx ui-stop
+
+EOF
+    ;;
+
+  ui-stop)
+    "${COMPOSE[@]}" --profile ui stop browser
+    ;;
+
+  showcase)
+    # A real MCP gateway product beside the stack, for c-02's debrief (ADR-021). Opt in. It is
+    # not the door the labs run through, so nothing here is assessed and nothing here is state.
+    "${COMPOSE[@]}" --profile showcase up -d --wait showcase
+    SHOW=https://showcase.aquaflux.internal
+    EMAIL=admin@aquaflux.internal
+    PASS=Aquaflux-Showcase-2026
+    token="$(curl -fsS -X POST "$SHOW/auth/login" -H 'content-type: application/json' \
+      -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}" | jq -r '.access_token // empty')"
+    if [ -z "$token" ]; then
+      echo "the showcase is up but would not sign in; check: docker compose -f $STACK_DIR/docker-compose.yml logs showcase" >&2
+      exit 1
+    fi
+    # Register the curated server if it is running, so the debrief has the two catalogues side
+    # by side. If it is not, say how; the debrief is worth doing either way.
+    registered=""
+    if curl -s -o /dev/null --max-time 3 http://localhost:8850/mcp; then
+      curl -fsS -X POST "$SHOW/gateways" -H "Authorization: Bearer $token" -H 'content-type: application/json' \
+        -d '{"name":"curated","url":"http://workspace.aquaflux.internal:8850/mcp","transport":"STREAMABLEHTTP"}' >/dev/null 2>&1 || true
+      registered="$(curl -fsS -H "Authorization: Bearer $token" "$SHOW/tools" \
+        | jq -r '.[] | "      \(.name)    (was \(.originalName))"')"
+    fi
+    cat <<EOF
+
+  The showcase gateway is up: IBM ContextForge, a real MCP gateway product.
+
+      $SHOW/admin          sign in as $EMAIL / $PASS
+
+  Open it in the lab browser (aqx ui). It is beside the stack, not in its path: no lab
+  command goes through it, and labs/stack/tool-gateway stays the door.
+
+EOF
+    if [ -n "$registered" ]; then
+      cat <<EOF
+  The curated server from c-02 is registered behind it. Read the names it gave the tools,
+  next to the names you gave them:
+
+$registered
+
+  That rename is the debrief. A rule written on the name you chose does not match the name
+  the gateway publishes, and a real gateway namespaces by server for a reason.
+
+EOF
+    else
+      cat <<'EOF'
+  Nothing is registered behind it yet. Start the curated server and run this again:
+
+      labs/stack/register-tool-server.sh labs/c-02/curated 8850 --policy wo-tools-3
+      aqx showcase
+
+EOF
+    fi
+    ;;
+
+  showcase-stop)
+    "${COMPOSE[@]}" --profile showcase stop showcase
+    ;;
+
+  reset)
+    # Put the seeded data back where a lab found it: work orders, dunning cases, approvals.
+    curl -fsS -X POST https://wom.aquaflux.internal/v4/_reset >/dev/null && echo "work orders reset"
+    curl -fsS -X POST https://cis.aquaflux.internal/dunning/_reset >/dev/null 2>&1 && echo "dunning cases reset" || true
+    curl -fsS -X DELETE https://approvals.aquaflux.internal/approvals >/dev/null 2>&1 && echo "approvals cleared" || true
+    ;;
+
+  policy)
+    # The learner's policy/ directory, into the policy engine, and the gateway onto it.
+    #
+    #   aqx policy apply policy/                 every .rego (not *_test.rego) and every data file
+    #   aqx policy apply policy/tools.rego       one file, plus the data files beside it
+    #   aqx policy show                          what the gateway is deciding with right now
+    #
+    # A policy file is loaded under its own name, so two files are two policies. Data files
+    # (.json, .yaml) are loaded per top-level key, so `data.register` and `data.tools` land where
+    # `opa test policy/` also finds them. Then the gateway is switched to the document that asks
+    # the engine, and the version it will write in the log is printed. That version is the hash
+    # of everything the engine now holds: change one character and it changes.
+    sub="${1:-}"; shift || true
+    OPA="${AQUAFLUX_OPA:-https://policy.aquaflux.internal:8181}"
+    TOOLS="${AQUAFLUX_TOOLS:-https://tools.aquaflux.internal:4444}"
+    case "$sub" in
+      apply)
+        target="${1:-policy}"
+        if [ -d "$target" ]; then dir="$target"; files=("$target"/*.rego)
+        elif [ -f "$target" ]; then dir="$(dirname "$target")"; files=("$target")
+        else echo "aqx policy apply: no such file or directory: $target" >&2; exit 1; fi
+        loaded=0
+        for f in "${files[@]}"; do
+          [ -e "$f" ] || continue
+          case "$f" in *_test.rego) continue ;; esac
+          name="$(basename "$f" .rego)"
+          out="$(curl -sS -o /dev/null -w '%{http_code}' -X PUT "$OPA/v1/policies/$name"             -H 'content-type: text/plain' --data-binary "@$f")"
+          if [ "$out" != "200" ]; then
+            echo "  the policy engine refused $f (HTTP $out):" >&2
+            curl -sS -X PUT "$OPA/v1/policies/$name" -H 'content-type: text/plain' --data-binary "@$f" | jq -r '.errors[]? | "    \(.location.row // "?"): \(.message)"' >&2
+            exit 1
+          fi
+          echo "  loaded $f as policy $name"
+          loaded=$((loaded + 1))
+        done
+        for f in "$dir"/*.json "$dir"/*.yaml "$dir"/*.yml; do
+          [ -e "$f" ] || continue
+          case "$f" in *.json) doc="$(jq -c . "$f")" ;; *) doc="$(python3 -c 'import sys,json,yaml;print(json.dumps(yaml.safe_load(open(sys.argv[1]))))' "$f")" ;; esac
+          for key in $(echo "$doc" | jq -r 'keys[] | select(startswith("_") | not)'); do
+            echo "$doc" | jq -c --arg k "$key" '.[$k]' | curl -sS -o /dev/null -X PUT "$OPA/v1/data/$key" -H 'content-type: application/json' --data-binary @-
+            echo "  loaded $f as data.$key"
+          done
+        done
+        [ "$loaded" -gt 0 ] || { echo "  nothing to load in $target" >&2; exit 1; }
+        # Keep log-only mode if it is on: loading new rules is exactly when a shadow run is wanted.
+        doc_id="aquaflux.tools"
+        [ "$(curl -sS "$TOOLS/version" | jq -r '.policy')" = "aquaflux.tools.log-only" ] && doc_id="aquaflux.tools.log-only"
+        curl -sS -o /dev/null -X PUT "$TOOLS/policy/$doc_id"
+        version="$(curl -sS "$TOOLS/version" | jq -r '.policy_version')"
+        echo "  the gateway now decides with the policy engine, policy $doc_id version $version"
+        [ "$doc_id" = "aquaflux.tools" ] || echo "  log-only: decisions are logged and not enforced. aqx policy mode enforce to enforce them"
+        ;;
+      mode)
+        # Enforce the engine's decisions, or only log them (a shadow run before switching on).
+        #   aqx policy mode log-only | aqx policy mode enforce
+        case "${1:-}" in
+          log-only) doc_id="aquaflux.tools.log-only" ;;
+          enforce) doc_id="aquaflux.tools" ;;
+          *) echo "usage: aqx policy mode log-only | enforce" >&2; exit 2 ;;
+        esac
+        curl -fsS -o /dev/null -X PUT "$TOOLS/policy/$doc_id" || { echo "  the gateway would not switch to $doc_id" >&2; exit 1; }
+        if [ "$1" = "log-only" ]; then
+          echo "  log-only: every call goes through, and the log line says what the policy would have done (enforced: false)"
+        else
+          echo "  enforcing: the policy engine's decisions stop calls again"
+        fi
+        ;;
+      show)
+        curl -sS "$TOOLS/policy" | jq .
+        ;;
+      *)
+        echo "usage: aqx policy apply <dir-or-file> | aqx policy mode log-only|enforce | aqx policy show" >&2; exit 2 ;;
+    esac
+    ;;
+
+  run)
+    # Run an agent against a case: f-01 names this. Only the collections agent exists so far.
+    #
+    #   aqx run collections-agent --case 4471 --config weak [--fixture note-variant-b] [--json]
+    #
+    # The configuration file is config/collections-agent.yaml where you stand, or the one in
+    # labs/f-01/ if there is none. The agent is labs/stack/agent/collections_agent.py; read it.
+    agent="${1:-}"; shift || true
+    case "$agent" in
+      collections-agent) exec python3 "$STACK_DIR/agent/collections_agent.py" "$@" ;;
+      "") echo "usage: aqx run collections-agent --case <id> --config <name> [--fixture <name>]" >&2; exit 2 ;;
+      *) echo "aqx run: no agent called $agent. There is collections-agent." >&2; exit 2 ;;
+    esac
+    ;;
+
+  log)
+    # The gateway's decision log, newest last.  aqx log [--last N] [--tool NAME]
+    n=1; tool=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --last) n="${2:-1}"; shift 2 ;;
+        --tool) tool="${2:-}"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    curl -sS "${AQUAFLUX_TOOLS:-https://tools.aquaflux.internal:4444}/logs?limit=$n${tool:+&tool=$tool}" | jq .
+    ;;
+
+  fixture)
+    # Which note case 4471 carries. f-01's second note is sealed until the prompt fix is in, and
+    # the learner's own wording is loaded once with its text and reloaded by name afterwards.
+    #
+    #   aqx fixture load note-variant-b --case 4471
+    #   aqx fixture load own --text "..." --case 4471
+    #   aqx fixture list
+    sub="${1:-}"; shift || true
+    CIS="${AQUAFLUX_CIS:-https://cis.aquaflux.internal}"
+    case "$sub" in
+      load)
+        name="${1:-}"; shift || true
+        case_id="4471"; text=""
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --case) case_id="${2:-4471}"; shift 2 ;;
+            --text) text="${2:-}"; shift 2 ;;
+            *) shift ;;
+          esac
+        done
+        [ -n "$name" ] || { echo "usage: aqx fixture load <name> [--text '...'] --case <id>" >&2; exit 2; }
+        curl -sS -X POST "$CIS/dunning/$case_id/_fixture" -H 'content-type: application/json' \
+          -d "$(jq -nc --arg n "$name" --arg t "$text" '{note: $n} + (if $t == "" then {} else {text: $t} end)')" \
+          | jq -r 'if .fixture then "  case \(.case_id) now carries \(.fixture)" else "  \(.detail // .)" end'
+        ;;
+      list)
+        curl -sS "$CIS/dunning/_fixtures" | jq .
+        ;;
+      *) echo "usage: aqx fixture load <name> [--text '...'] --case <id> | aqx fixture list" >&2; exit 2 ;;
+    esac
+    ;;
+
+  collector)
+    # The collector's configuration is the learner's file, baked into the image (ADR-019: no bind
+    # mounts) and restarted. Seconds, not minutes. d-04 names this.
+    #
+    #   aqx collector apply collector.yaml
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      apply)
+        file="${1:-collector.yaml}"
+        [ -f "$file" ] || { echo "aqx collector apply: no file at $file" >&2; exit 2; }
+        # The build context is labs/stack/collector/, a staging copy: the file given is copied
+        # there, never the other way round, so applying tiers/worked/collector.yaml does not
+        # overwrite the learner's labs/d-04/collector.yaml.
+        target="$STACK_DIR/collector/collector.yaml"
+        mkdir -p "$STACK_DIR/collector"
+        cp "$file" "$target"
+        "${COMPOSE[@]}" build --quiet collector >/dev/null 2>&1 || "${COMPOSE[@]}" build collector
+        "${COMPOSE[@]}" up -d --no-deps collector >/dev/null 2>&1
+        for _ in $(seq 1 30); do
+          if curl -fsS --max-time 2 https://collector.aquaflux.internal:13133/healthz >/dev/null 2>&1; then
+            echo "  the collector is up with $(basename "$file") ($(sha256sum "$target" | cut -c1-8))"; exit 0
+          fi
+          sleep 1
+        done
+        echo "  the collector did not come back; read: docker compose -f $STACK_DIR/docker-compose.yml logs collector" >&2
+        exit 1 ;;
+      *) echo "usage: aqx collector apply <file>" >&2; exit 2 ;;
+    esac
+    ;;
+
+  telemetry)
+    # Put d-04's evidence back to the state its handout describes: an audit store holding the
+    # history's spans and no decision records, a trace store holding the history, the gateway's
+    # decision file untouched. smoke.sh d-04 runs this, so a stack that has already been through
+    # the lab once (an instructor's, or verify.sh) starts the lab as a fresh one would.
+    #
+    #   aqx telemetry reset
+    #
+    # The audit store is append-only by design, which is why it has to be emptied out of band:
+    # a throwaway container wipes the volume, the trace store restarts empty, the collector
+    # restarts and reads the decision file from its beginning, and the seed refills the history
+    # within a minute. The alpine image is the one the `tls` service already uses.
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      reset)
+        "${COMPOSE[@]}" --profile telemetry stop collector traces telemetry-seed >/dev/null 2>&1
+        docker run --rm -v aquaflux-labs_audit:/audit alpine:3.22 sh -c 'rm -rf /audit/audit.jsonl /audit/checkpoints' >/dev/null 2>&1 \
+          || { echo "  could not wipe the audit store volume" >&2; exit 1; }
+        # The collector comes back with the learner's own configuration, not with whatever was
+        # staged last: after a rehearsal that is the fixed one, and it would read the decision
+        # file into the fresh audit store before anybody has found the gap.
+        mkdir -p "$STACK_DIR/collector" && cp "$STACK_DIR/../d-04/collector.yaml" "$STACK_DIR/collector/collector.yaml"
+        "${COMPOSE[@]}" build --quiet collector >/dev/null 2>&1 || "${COMPOSE[@]}" build collector
+        "${COMPOSE[@]}" --profile telemetry up -d --no-deps traces collector telemetry-seed >/dev/null 2>&1
+        for _ in $(seq 1 60); do
+          if [ "$(curl -s --max-time 3 "${AQUAFLUX_TRACES:-https://traces.aquaflux.internal:16686}/api/v3/traces/0af7651916cd43dd8448eb211c80319c" | jq '.result.resourceSpans | length' 2>/dev/null)" -ge 1 ] 2>/dev/null; then
+            echo "  telemetry reset: the audit store is empty and the history is back in the trace store"; exit 0
+          fi
+          sleep 2
+        done
+        echo "  telemetry reset: the history did not come back within two minutes; read: docker compose -f $STACK_DIR/docker-compose.yml logs telemetry-seed" >&2
+        exit 1 ;;
+      *) echo "usage: aqx telemetry reset" >&2; exit 2 ;;
+    esac
+    ;;
+
+  trace)
+    # The trace store's query API (Jaeger's /api/v3, OTLP JSON out), with the window a regulator
+    # needs and not the viewer's last hour. d-04 names this. The v2 store no longer serves the
+    # old /api/traces search, and its attribute filter is a URL-encoded JSON map, which is why
+    # this wrapper exists rather than a curl in the handout.
+    #
+    #   aqx trace <trace-id>                                   one trace, every span, compact
+    #   aqx trace --tag aquaflux.idempotency_key=wo-88213-a1   [--service reading-assistant]
+    J="${AQUAFLUX_TRACES:-https://traces.aquaflux.internal:16686}"
+    service="reading-assistant"; tag=""; id=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --tag) tag="${2:-}"; shift 2 ;;
+        --service) service="${2:-}"; shift 2 ;;
+        *) id="$1"; shift ;;
+      esac
+    done
+    # OTLP JSON, flattened to one row per span with its service name and its attributes.
+    spans='[ .result.resourceSpans[]? as $rs
+             | ($rs.resource.attributes // [] | map({(.key): (.value|.[])}) | add // {}) as $r
+             | $rs.scopeSpans[]?.spans[]?
+             | {traceId, spanId, parentSpanId, service: $r["service.name"], name,
+                at: ((.startTimeUnixNano|tonumber)/1e9 | todate),
+                attributes: (.attributes // [] | map({(.key): (.value|.[])}) | add // {})} ]
+           | sort_by(.at)'
+    window="query.start_time_min=2026-01-01T00:00:00Z&query.start_time_max=$(date -u -d '+1 day' +%Y-%m-%dT00:00:00Z)"
+    if [ -n "$id" ]; then
+      curl -fsS "$J/api/v3/traces/$id" | jq "{traceId: \"$id\", spans: $spans}"
+    elif [ -n "$tag" ]; then
+      key="${tag%%=*}"; value="${tag#*=}"
+      attributes="$(jq -nc --arg k "$key" --arg v "$value" '{($k): $v}' | jq -sRr @uri)"
+      # "No traces found" is a 404 with a JSON body, not an error: it is the answer.
+      curl -sS "$J/api/v3/traces?query.service_name=$service&$window&query.num_traces=100&query.attributes=$attributes" \
+        | jq "if .result then ($spans | {found: (map(.traceId) | unique | length), traces: (map(.traceId) | unique)}) else {found: 0, traces: []} end"
+    else
+      echo "usage: aqx trace <trace-id> | aqx trace --tag <key>=<value> [--service <name>]" >&2; exit 2
+    fi
+    ;;
+
+  audit)
+    # The audit store the collector writes: one JSON object per line, spans and decision records
+    # alike, in OTLP's JSON shape. Read through the ingress, filtered here. d-04 names this.
+    #
+    #   aqx audit --trace <trace-id>       everything on one trace: spans and the decision record
+    #   aqx audit --last 5                 the last five records of any kind
+    A="${AQUAFLUX_COLLECTOR:-https://collector.aquaflux.internal:13133}/audit/audit.jsonl"
+    trace=""; last=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --trace) trace="${2:-}"; shift 2 ;;
+        --last) last="${2:-5}"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    # OTLP JSON wraps every value ({"stringValue": ...}, {"kvlistValue": ...}); `unwrap` takes
+    # the wrapping off recursively so a decision record's `arguments` reads as the object it is.
+    flatten='def unwrap: if type == "object" then
+        (if has("kvlistValue") then (.kvlistValue.values // [] | map({(.key): (.value|unwrap)}) | add // {})
+         elif has("arrayValue") then (.arrayValue.values // [] | map(unwrap))
+         elif has("stringValue") then .stringValue
+         elif has("intValue") then (.intValue|tonumber)
+         elif has("doubleValue") then .doubleValue
+         elif has("boolValue") then .boolValue
+         else . end) else . end;
+      def attrs: (. // [] | map({(.key): (.value|unwrap)}) | add // {});
+    (
+      (.resourceSpans // [])[] as $rs | ($rs.resource.attributes | attrs) as $r
+        | $rs.scopeSpans[]?.spans[]? | {kind: "span", service: $r["service.name"], traceId: .traceId, spanId: .spanId,
+            name: .name, at: ((.startTimeUnixNano|tonumber)/1e9 | todate), attributes: (.attributes | attrs)}
+    ), (
+      (.resourceLogs // [])[] as $rl | $rl.scopeLogs[]?.logRecords[]? | {kind: "decision_record", traceId: .traceId, spanId: .spanId,
+            at: ((.timeUnixNano|tonumber)/1e9 | todate), attributes: (.attributes | attrs)}
+    )'
+    if [ -n "$trace" ]; then
+      curl -fsS "$A" | jq -c "$flatten" | jq -c --arg t "$trace" 'select((.traceId|ascii_downcase) == ($t|ascii_downcase))'
+    elif [ -n "$last" ]; then
+      curl -fsS "$A" | jq -c "$flatten" | tail -n "$last"
+    else
+      echo "usage: aqx audit --trace <trace-id> | aqx audit --last <n>" >&2; exit 2
+    fi
+    ;;
+
+  approvals)
+    # What the approval service currently holds. approve.sh records one; this lists them.
+    case "${1:-}" in
+      clear) curl -sS -X DELETE "${AQUAFLUX_APPROVALS:-https://approvals.aquaflux.internal}/approvals" | jq -c . ;;
+      *) curl -sS "${AQUAFLUX_APPROVALS:-https://approvals.aquaflux.internal}/approvals?active=true" | jq . ;;
+    esac
+    ;;
+
+  help|--help|-h)
+    cat <<'EOF'
+usage: aqx <command>
+
+  welcome            what to run first
+  up <profile>...    start services by profile
+  down               stop every service, keep the data
+  ps                 what is running
+  logs [service]     follow the logs
+  ui                 start the browser on the lab network, at localhost:3000
+  ui-stop            stop it again
+  showcase           start a real MCP gateway product beside the stack, for the debrief
+  showcase-stop      stop it again
+  reset              put the seeded data back
+  policy apply <p>   load a policy directory or file into the policy engine, and point the gateway at it
+  policy mode <m>    log-only: log the engine's decisions and enforce none; enforce: back to enforcing
+  policy show        what the gateway is deciding with
+  run <agent> ...    run an agent against a case (f-01: aqx run collections-agent --case 4471 --config weak)
+  log [--last N]     the gateway's decision log
+  fixture load|list  which note case 4471 carries
+  approvals [clear]  what the approval service holds
+  trace <id>         one trace from the trace store; --tag key=value searches it (d-04)
+  audit --trace <id> what the audit store holds for one trace; --last N for the newest records
+  collector apply <f>  run the collector from a configuration file (d-04)
+  telemetry reset    put d-04's evidence back the way the handout describes it
+
+Profiles: core model identity tools policy telemetry retrieval workflow ui showcase
+EOF
+    ;;
+
+  *)
+    echo "aqx: unknown command '$cmd'. Try 'aqx help'." >&2
+    exit 2
+    ;;
+esac

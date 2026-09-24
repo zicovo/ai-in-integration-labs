@@ -1,0 +1,28 @@
+# The model list when Azure OpenAI is configured and answered. This is the default path of
+# dec:OD-025, chosen because c-02 asks a model to pick a generic tool and infer `disconnection`
+# from a catalogue of twenty-three, which a small model on a laptop CPU may not do reliably.
+#
+# The deployment names are configuration and no handout names one. If a delivery uses different
+# deployments, change the environment and nothing else.
+
+model_list:
+
+  # What every lab calls.
+  - model_name: aquaflux-default
+    litellm_params:
+      model: azure/AQUAFLUX_AZURE_DEPLOYMENT
+      api_base: os.environ/AZURE_API_BASE
+      api_key: os.environ/AZURE_API_KEY
+      api_version: os.environ/AZURE_API_VERSION
+      timeout: 300
+
+  # a-02's configuration two, seeded the same way it is locally: through the model-seed service,
+  # because the learner's own system message would otherwise replace anything set here. The
+  # seeding proxy speaks OpenAI's chat completions on this path and forwards to Azure itself, so
+  # the gateway addresses it as an OpenAI-compatible provider rather than as Azure.
+  - model_name: aquaflux-alt
+    litellm_params:
+      model: openai/AQUAFLUX_AZURE_DEPLOYMENT
+      api_base: http://seed.aquaflux.internal:11434/v1
+      api_key: os.environ/AZURE_API_KEY
+      timeout: 300

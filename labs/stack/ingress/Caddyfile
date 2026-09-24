@@ -1,0 +1,138 @@
+# TLS for every Aquaflux address, terminated here and forwarded in plain HTTP to the service
+# behind it.
+#
+# Why an ingress rather than TLS on each service: the stack runs Keycloak, a model gateway, a
+# policy engine, a trace viewer, a workflow engine and three APIs written for the labs, and each
+# would configure TLS differently or not at all. One place that terminates, one certificate, one
+# thing to get right.
+#
+# The public names live here. A service is reached by its Compose service name from inside the
+# network, and by its aquaflux.internal name from a terminal, a script or the lab browser. That
+# split is why `wom` fetches the realm's keys from `identity:8080` and not from the public name:
+# service to service traffic has no reason to leave the network or to need the certificate.
+#
+# Upstreams that do not exist yet answer 502. That is honest: those profiles are not built.
+
+{
+	auto_https off
+	admin off
+	log {
+		format console
+		level ERROR
+	}
+}
+
+# Every proxied site, with the upstream as the argument.
+#
+# The Location rewrite is not decoration. A service behind a terminating proxy does not know it
+# is behind one, so it builds its own redirects from the scheme it is listening on, which is
+# plain HTTP. The model gateway does exactly that: a request to /ui came back as a 307 to
+# http://models.aquaflux.internal:4000/ui/, a scheme downgrade to a port that only serves TLS,
+# and the participant lands on a connection error one click into the product. Caddy sets
+# X-Forwarded-Proto already; this catches the services that ignore it.
+(served) {
+	tls /etc/aquaflux/tls/server.crt /etc/aquaflux/tls/server.key
+	encode zstd gzip
+}
+
+(aquaflux) {
+	import served
+	reverse_proxy {args[0]} {
+		header_down Location "^http://" "https://"
+	}
+}
+
+# Anything that arrives in plain HTTP is sent to the same address over TLS, so an old link or a
+# habit does not produce a confusing connection error.
+http://*.aquaflux.internal {
+	redir https://{host}{uri} permanent
+}
+
+# --- the front door ---------------------------------------------------------------------------
+# Served here rather than shipped inside the browser image, so that it has a real address. A
+# start page on a file:// URL exists only in the container that holds it: it cannot be linked in
+# a handout, opened from a terminal, or sent to somebody who is stuck.
+
+https://aquaflux.internal {
+	import served
+	root * /srv/start
+	# The page changes with the stack, and without this a browser that saw an older one keeps
+	# showing it: Caddy sends no caching header, so the browser may reuse its copy unasked.
+	header Cache-Control "no-cache"
+	file_server
+}
+
+# --- systems of record, on 443 so the handouts can address them without a port ---------------
+
+https://wom.aquaflux.internal {
+	import aquaflux wom:80
+}
+
+https://mdm.aquaflux.internal {
+	import aquaflux mdm:80
+}
+
+https://cis.aquaflux.internal {
+	import aquaflux cis:80
+}
+
+# --- the identity provider --------------------------------------------------------------------
+
+https://idp.aquaflux.internal {
+	import aquaflux identity:8080
+}
+
+# --- the control layer, each on the port its handout names -------------------------------------
+
+https://models.aquaflux.internal:4000 {
+	import aquaflux models:4000
+}
+
+https://tools.aquaflux.internal:4444 {
+	import aquaflux tools:4444
+}
+
+https://policy.aquaflux.internal:8181 {
+	import aquaflux policy:8181
+}
+
+https://approvals.aquaflux.internal {
+	import aquaflux approvals:80
+}
+
+# --- evidence and state -------------------------------------------------------------------------
+
+https://traces.aquaflux.internal:16686 {
+	import aquaflux traces:16686
+}
+
+# The collector's health extension, and beside it the audit store it writes: the file exporter's
+# output, served read-only from the shared volume, so that d-04's evidence has an address. A
+# real deployment puts this in object storage with a retention rule; here it is a directory.
+https://collector.aquaflux.internal:13133 {
+	import served
+	handle_path /audit/* {
+		root * /srv/audit
+		file_server browse
+	}
+	handle {
+		reverse_proxy collector:13133 {
+			header_down Location "^http://" "https://"
+		}
+	}
+}
+
+https://workflow.aquaflux.internal:8233 {
+	import aquaflux workflow:8233
+}
+
+https://vectors.aquaflux.internal:6333 {
+	import aquaflux vectors:6333
+}
+
+# --- the showcase, opt-in, beside the stack ---------------------------------------------------
+# A real MCP gateway product for the debrief (ADR-021). Not in any lab's path.
+
+https://showcase.aquaflux.internal {
+	import aquaflux showcase:4444
+}

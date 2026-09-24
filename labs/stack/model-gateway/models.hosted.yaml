@@ -1,0 +1,28 @@
+# The model list for an OpenAI-compatible hosted endpoint. This is what Azure AI Foundry serves
+# at `https://<resource>.services.ai.azure.com/openai/v1`, and what most non-Azure providers
+# serve too: the model goes in the body, the key is a bearer token, and there is no api-version.
+#
+# entrypoint.sh chooses between this and models.azure.yaml by looking at the endpoint, because a
+# classic Azure OpenAI resource at `*.openai.azure.com` wants a quite different request: the
+# deployment in the URL, an `api-key` header, and an api-version parameter. Getting that wrong
+# produces a 404 that reads like a missing deployment rather than a wrong dialect, which is a
+# bad half hour before a delivery.
+
+model_list:
+
+  # What every lab calls.
+  - model_name: aquaflux-default
+    litellm_params:
+      model: openai/AQUAFLUX_AZURE_DEPLOYMENT
+      api_base: os.environ/AZURE_API_BASE
+      api_key: os.environ/AZURE_API_KEY
+      timeout: 300
+
+  # a-02's configuration two, seeded through the model-seed service, because the learner's own
+  # system message would replace anything set here. The proxy forwards to the same endpoint.
+  - model_name: aquaflux-alt
+    litellm_params:
+      model: openai/AQUAFLUX_AZURE_DEPLOYMENT
+      api_base: http://seed.aquaflux.internal:11434/v1
+      api_key: os.environ/AZURE_API_KEY
+      timeout: 300

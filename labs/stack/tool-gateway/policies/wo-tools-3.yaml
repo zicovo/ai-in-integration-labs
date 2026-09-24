@@ -1,0 +1,37 @@
+# The rule the split makes writable.
+#
+# Same gateway, same agent, same person, same work order API. The only thing that changed is the
+# catalogue: `create_meter_check_work_order` and `create_disconnection_work_order` are different
+# names, so they can carry different rules. That is the sentence to say out loud in the debrief.
+#
+# `create_disconnection_work_order` is not published by `curated/`, and the gateway says so at
+# GET /policy under `rules_without_a_tool`. The rule is still the answer to c-02's completion
+# tier: what the exercise asks for is a rule that is expressible, and expressible is exactly what
+# it became when the generic operation stopped being one tool.
+
+id: wo-tools-3
+version: "3"
+description: >
+  Meter checks are the reading assistant's to raise. Disconnections are held for a collections
+  team lead, who is a different person from the one who asked.
+identity: optional
+default: deny
+rules:
+  - tool: create_meter_check_work_order
+    agents: [reading-assistant]
+    decision: allow
+    reason: a meter check is reversible, cheap and within the service desk's authority
+
+  - tool: create_disconnection_work_order
+    agents: [reading-assistant]
+    decision: hold
+    approver: sam
+    action: disconnection
+    reason: >
+      cutting off a supply is held for the collections team lead, who has to be somebody other
+      than the identity that asked for it
+
+  - tool: get_work_order_status
+    agents: [reading-assistant]
+    decision: allow
+    reason: reading the state of a work order is harmless

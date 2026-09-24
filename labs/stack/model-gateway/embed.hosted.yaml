@@ -1,0 +1,10 @@
+# The embedding model on an OpenAI-compatible hosted endpoint. Appended to the model list by
+# entrypoint.sh only when the endpoint answered a real embedding request for this deployment;
+# otherwise embed.local.yaml is used, whatever the chat model does. b-01 and b-02 embed through
+# the same gateway, so the same key, budget and log cover it.
+  - model_name: aquaflux-embed
+    litellm_params:
+      model: openai/AQUAFLUX_AZURE_EMBED_DEPLOYMENT
+      api_base: os.environ/AZURE_API_BASE
+      api_key: os.environ/AZURE_API_KEY
+      timeout: 300

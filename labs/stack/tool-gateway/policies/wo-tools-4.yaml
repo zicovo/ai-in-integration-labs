@@ -1,0 +1,38 @@
+# The same catalogue, with the token taken seriously.
+#
+# d-02 activates this one. wo-tools-3 logs whatever identity a call happens to carry and decides
+# on the tool name alone; this one refuses a call that carries no token, refuses a token
+# addressed to another resource, and refuses a token that does not carry the scope the tool
+# needs. Nothing about the tools changed. What changed is what the gateway is willing to accept
+# as authority, and that is d-02's whole subject.
+#
+# The order of those checks is in app/policy.py and d-02 grades on it: audience before scope.
+
+id: wo-tools-4
+version: "1"
+description: >
+  The reading assistant may create a meter check work order while acting for a person, with a
+  token addressed to the work order API and carrying only the scope that tool needs.
+identity: required
+audience: wom-api
+default: deny
+rules:
+  - tool: create_meter_check_work_order
+    agents: [reading-assistant]
+    scope: workorder:create
+    decision: allow
+    reason: the reading assistant is acting for a person who may raise a meter check
+
+  - tool: get_work_order_status
+    agents: [reading-assistant]
+    scope: workorder:read
+    decision: allow
+    reason: reading the state of a work order is harmless
+
+  - tool: create_disconnection_work_order
+    agents: [reading-assistant]
+    scope: workorder:create
+    decision: hold
+    approver: sam
+    action: disconnection
+    reason: cutting off a supply is held for the collections team lead

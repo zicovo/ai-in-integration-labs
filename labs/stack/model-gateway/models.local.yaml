@@ -1,0 +1,20 @@
+# The model list when no hosted provider is configured, or when one is configured and did not
+# answer. This is the fallback path of dec:OD-025 and it is the path the stack was measured on.
+
+model_list:
+
+  # What every lab calls. One local model, reached through whichever runtime answered.
+  - model_name: aquaflux-default
+    litellm_params:
+      model: ollama_chat/AQUAFLUX_MODEL
+      api_base: AQUAFLUX_RUNTIME_BASE
+      timeout: 300
+
+  # a-02's configuration two. The same runtime and the same weights, with an extra instruction
+  # seeded in front of the learner's own. The seeding happens in the model-seed service, not here,
+  # because a system prompt sent by the learner's script would otherwise replace it.
+  - model_name: aquaflux-alt
+    litellm_params:
+      model: ollama_chat/AQUAFLUX_MODEL
+      api_base: http://seed.aquaflux.internal:11434
+      timeout: 300
