@@ -98,12 +98,12 @@ def search(conn, table: str, question: str, limit: int) -> list[tuple[str, int, 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Show both rankings and the fused one for a question.")
-    parser.add_argument("--question", type=int, help="a number from the ground-the-assistant questions.yaml")
+    parser.add_argument("--question", type=int, help="a number from the ground-the-answer questions.yaml")
     parser.add_argument("--text", help="a question of your own")
     parser.add_argument("--table", default="chunks")
     args = parser.parse_args()
     if args.question:
-        questions = r.load_questions(r.REPO / "labs" / "corpus" / "ground-the-assistant" / "questions.yaml")
+        questions = r.load_questions(r.REPO / "labs" / "corpus" / "ground-the-answer" / "questions.yaml")
         text = next(q["text"] for q in questions if int(q["id"]) == args.question)
     elif args.text:
         text = args.text

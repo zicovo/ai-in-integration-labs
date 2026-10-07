@@ -33,7 +33,7 @@ from answer import answer  # noqa: E402
 from naive import CONFIG, ask  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
-CORPUS = r.REPO / "labs" / "corpus" / "ground-the-assistant"
+CORPUS = r.REPO / "labs" / "corpus" / "ground-the-answer"
 
 VERDICT_SCHEMA = {
     "type": "object",

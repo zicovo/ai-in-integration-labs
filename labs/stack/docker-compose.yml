@@ -141,7 +141,7 @@ services:
       AQUAFLUX_JWKS_URL: http://identity:8080/realms/aquaflux/protocol/openid-connect/certs
 
   # ------------------------------------------------------- profiles: model, retrieval
-  # One database for the whole stack. index-the-manuals and ground-the-assistant put their vectors here, and the model gateway
+  # One database for the whole stack. index-the-manuals and ground-the-answer put their vectors here, and the model gateway
   # writes its call log here, which is why it starts with the `model` profile too: one-governed-call's
   # acceptance check asks the learner to find both runs in the gateway log with their token
   # counts, and without a store behind it that endpoint returns a 500 rather than a log.

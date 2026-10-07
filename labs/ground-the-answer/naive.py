@@ -22,7 +22,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "index-t
 import retrieval as r  # noqa: E402
 
 CONFIG = yaml.safe_load((pathlib.Path(__file__).resolve().parent / "config.yaml").read_text())
-QUESTIONS = r.REPO / "labs" / "corpus" / "ground-the-assistant" / "questions.yaml"
+QUESTIONS = r.REPO / "labs" / "corpus" / "ground-the-answer" / "questions.yaml"
 
 
 def passages(conn, table: str, question: str, k: int) -> list[dict]:

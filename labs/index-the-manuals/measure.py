@@ -3,7 +3,7 @@
 
     python measure.py                                  vector search on `chunks`, k=5
     python measure.py --table chunks_fixed_300         another table, same questions
-    python measure.py --retriever hybrid               ground-the-assistant: vector and lexical, fused
+    python measure.py --retriever hybrid               ground-the-answer: vector and lexical, fused
     python measure.py --k 3 --ef-search 10             index-the-manuals completion tier's trade-off
 
 A question is a hit when any chunk of a document named in relevance.yaml is in the top k. The
@@ -11,7 +11,7 @@ top hit is printed for every question, because recall at five can read 1.0 while
 would have answered from the wrong page: the asset sheet scraping into fifth place is the case
 the handout tells you to read.
 
-Question eleven (ground-the-assistant) has no relevance entry and is skipped here; score.py is where it counts.
+Question eleven (ground-the-answer) has no relevance entry and is skipped here; score.py is where it counts.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import time
 
 import retrieval as r
 
-B02 = r.REPO / "labs" / "corpus" / "ground-the-assistant"
+B02 = r.REPO / "labs" / "corpus" / "ground-the-answer"
 
 
 def vector_search(conn, table: str, question: str, limit: int) -> list[tuple[str, int, str | None, float]]:
@@ -37,9 +37,9 @@ def vector_search(conn, table: str, question: str, limit: int) -> list[tuple[str
 
 
 def hybrid_search(conn, table: str, question: str, limit: int):
-    """ground-the-assistant's retriever: reciprocal rank fusion of the vector ranking and the lexical one."""
-    sys.path.insert(0, str(r.REPO / "labs" / "ground-the-assistant"))
-    import hybrid  # noqa: E402  the file the ground-the-assistant handout has you read
+    """ground-the-answer's retriever: reciprocal rank fusion of the vector ranking and the lexical one."""
+    sys.path.insert(0, str(r.REPO / "labs" / "ground-the-answer"))
+    import hybrid  # noqa: E402  the file the ground-the-answer handout has you read
 
     return hybrid.search(conn, table, question, limit)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ground-the-assistant's measure: index-the-manuals's, with the ground-the-assistant question set. `--retriever vector` or `--retriever hybrid`.
+"""ground-the-answer's measure: index-the-manuals's, with the ground-the-answer question set. `--retriever vector` or `--retriever hybrid`.
 
     python measure.py --retriever vector
     python measure.py --retriever hybrid
@@ -12,7 +12,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 B01 = HERE.parent / "index-the-manuals"
-CORPUS = HERE.parent / "corpus" / "ground-the-assistant"
+CORPUS = HERE.parent / "corpus" / "ground-the-answer"
 
 sys.path.insert(0, str(B01))
 args = sys.argv[1:]

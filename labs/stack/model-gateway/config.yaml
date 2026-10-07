@@ -22,5 +22,5 @@ general_settings:
   # straight after step four, and a batch still in memory looks like calls that never happened.
   proxy_batch_write_at: 1
   # The learner's key is the master key in this stack. A real deployment issues virtual keys per
-  # team with a budget each, which is d-01's subject; here there is one learner per stack and a
+  # team with a budget each, which is the three gateways module's subject; here there is one learner per stack and a
   # key database would be one more service to explain.

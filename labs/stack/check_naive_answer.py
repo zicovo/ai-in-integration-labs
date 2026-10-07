@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Measure ground-the-assistant's naive pipeline instead of assuming it.
+"""Measure ground-the-answer's naive pipeline instead of assuming it.
 
-ground-the-assistant's handout says that, asked whether there is a subsidy for replacing a lead service pipe, the
+ground-the-answer's handout says that, asked whether there is a subsidy for replacing a lead service pipe, the
 naive pipeline "invents a procedure, with a citation", and that asked what valve V-2231 needs it
 "answers from a gate valve page". Both are properties of a model, not of the lab, and the handout
 itself says to check them before the session and to show a recorded run if the model of the day
@@ -13,7 +13,7 @@ refuses. A recording has to be of a real run, so this is where the real runs are
                                                            the same, on the local fallback model
                                                            (dec:OD-025), called on the runtime directly
 
-Run it with the ground-the-assistant stack up (`labs/stack/smoke.sh ground-the-assistant`). It prints every answer, because the
+Run it with the ground-the-answer stack up (`labs/stack/smoke.sh ground-the-answer`). It prints every answer, because the
 classification below is a model reading a model and a human should read the text, then a table.
 Exit 0 if question eleven was answered as if the corpus held an answer at least once, which is
 the weakest claim the handout's step one depends on; 1 if the model refused every time, in which
@@ -30,7 +30,7 @@ import sys
 STACK = pathlib.Path(__file__).resolve().parent
 REPO = STACK.parent.parent
 sys.path.insert(0, str(REPO / "labs" / "index-the-manuals"))
-sys.path.insert(0, str(REPO / "labs" / "ground-the-assistant"))
+sys.path.insert(0, str(REPO / "labs" / "ground-the-answer"))
 
 import retrieval as r  # noqa: E402
 import requests  # noqa: E402

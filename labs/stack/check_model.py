@@ -10,7 +10,7 @@ Two capabilities, and the labs fail differently without each:
 
     tool calling     one-governed-call, expose-one-operation, survive-the-crash and break-it-then-fix-it all turn on a model proposing a tool call. Without
                      it there is no lab, only a chat window.
-    strict JSON      one-governed-call's output schema and ground-the-assistant's judged scoring parse the reply. Without it
+    strict JSON      one-governed-call's output schema and ground-the-answer's judged scoring parse the reply. Without it
                      the learner debugs a parser instead of learning where the boundary is.
 
 Exit code 0 when both work.

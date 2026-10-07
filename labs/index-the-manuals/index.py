@@ -15,7 +15,7 @@ with both. Re-indexing with another rule or another model goes into another tabl
 reason: mixing them in one table would make the recall table below meaningless.
 
 The schema is the one the handout prints. The table is created if it does not exist, so the
-smoke test can load a reference index for ground-the-assistant; in the worked tier you create it yourself first,
+smoke test can load a reference index for ground-the-answer; in the worked tier you create it yourself first,
 with the vector length your smoke test printed.
 """
 
@@ -95,9 +95,9 @@ def main() -> int:
                      model, args.rule, r.vector_literal(vector)),
                 )
         conn.execute(f"create index if not exists {table}_embedding_idx on {table} using hnsw (embedding vector_cosine_ops)")
-        # ground-the-assistant's lexical retriever reads this. A generated column with a GIN index, so the full
+        # ground-the-answer's lexical retriever reads this. A generated column with a GIN index, so the full
         # text query in the handout is fast and the learner does not have to build it (the
-        # instructor note in ground-the-assistant asks for exactly that).
+        # instructor note in ground-the-answer asks for exactly that).
         conn.execute(f"""
             alter table {table} add column if not exists tsv tsvector
               generated always as (to_tsvector('english', coalesce(heading, '') || ' ' || body)) stored

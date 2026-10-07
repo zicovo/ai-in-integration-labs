@@ -25,7 +25,7 @@ FAILED=0
 profiles_for() {
   case "$1" in
     one-governed-call) echo "core model" ;;
-    index-the-manuals|ground-the-assistant) echo "model retrieval" ;;
+    index-the-manuals|ground-the-answer) echo "model retrieval" ;;
     expose-one-operation) echo "core model identity tools" ;;
     carry-the-authority) echo "core identity tools" ;;
     block-the-call) echo "core identity tools policy" ;;
@@ -44,7 +44,7 @@ usage() {
   cat >&2 <<'USAGE'
 usage: labs/stack/smoke.sh <lab>
 
-  one-governed-call  index-the-manuals  ground-the-assistant  expose-one-operation  carry-the-authority  block-the-call  reconstruct-one-transaction  survive-the-crash  break-it-then-fix-it
+  one-governed-call  index-the-manuals  ground-the-answer  expose-one-operation  carry-the-authority  block-the-call  reconstruct-one-transaction  survive-the-crash  break-it-then-fix-it
 USAGE
   exit 2
 }
@@ -455,14 +455,14 @@ check_retrieval() {
     local rows
     rows="$(psql "${AQUAFLUX_DB:-postgres://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux}" -tAc "select count(*) from chunks" 2>/dev/null | tr -d ' ')"
     if [ -n "$rows" ]; then
-      note "a chunks table is already there with $rows rows, from an earlier run of this lab or of ground-the-assistant"
+      note "a chunks table is already there with $rows rows, from an earlier run of this lab or of ground-the-answer"
       note "to start the worked tier from nothing:  psql \"\$AQUAFLUX_DB\" -c 'drop table chunks'"
     else
       ok "no chunks table yet: step one of the worked tier creates it"
     fi
   fi
-  if [ "$MODULE" = "ground-the-assistant" ]; then
-    # ground-the-assistant continues from index-the-manuals's index. If it is not there, load the reference one.
+  if [ "$MODULE" = "ground-the-answer" ]; then
+    # ground-the-answer continues from index-the-manuals's index. If it is not there, load the reference one.
     local rows
     rows="$(psql "${AQUAFLUX_DB:-postgres://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux}" -tAc "select count(*) from chunks" 2>/dev/null | tr -d ' ')"
     if [ -n "$rows" ] && [ "$rows" -gt 0 ] 2>/dev/null; then
@@ -599,7 +599,7 @@ case "$MODULE" in
   carry-the-authority) check_core; check_identity; check_wom_module; check_tools ;;
   block-the-call) check_core; check_identity; check_wom_module; check_tools; check_policy ;;
   reconstruct-one-transaction) check_core; check_model; check_identity; check_wom_module; check_tools; check_policy; check_telemetry ;;
-  index-the-manuals|ground-the-assistant) check_model; check_retrieval ;;
+  index-the-manuals|ground-the-answer) check_model; check_retrieval ;;
 esac
 
 # expose-one-operation and survive-the-crash both start from a clean connection 4471.

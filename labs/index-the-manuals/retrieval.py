@@ -1,5 +1,5 @@
 """What index.py and measure.py share: the corpus, the chunking rules, the embedding call and the
-database. ground-the-assistant's scripts import it too, so there is one definition of a chunk in these labs.
+database. ground-the-answer's scripts import it too, so there is one definition of a chunk in these labs.
 
 Read it once. Nothing here is clever, and the one line that matters is marked: the title and the
 heading are prepended to the chunk body before it is embedded, so that a chunk read on its own

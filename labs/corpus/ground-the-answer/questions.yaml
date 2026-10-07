@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../../../schemas/corpus-questions.schema.json
-# The eleven questions for ground-the-assistant: index-the-manuals's ten, and one the corpus cannot answer. Programme content, approved: false, reviewed like a module.
+# The eleven questions for ground-the-answer: index-the-manuals's ten, and one the corpus cannot answer. Programme content, approved: false, reviewed like a module.
 # `relevance.yaml` names the documents that answer the first ten. Eleven has no entry, on purpose. Question nine is the identifier
 # question the handout's deliberate failure turns on; seven is the other identifier question and
 # ten is the negation, which the open tier's constraints ask for.

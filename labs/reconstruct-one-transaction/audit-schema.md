@@ -26,7 +26,7 @@ One page, on purpose. Read it before you search; you are looking for these keys.
 | 3 | Model and prompt version | `aquaflux.model.requested`, `aquaflux.model.answered`, `aquaflux.model.deployment_id`, `aquaflux.model.api_base`, `aquaflux.prompt.version` | agent runtime, from the model gateway's answer and headers |
 | 4 | Identity chain | `aquaflux.agent`, `aquaflux.person` on the root span; `agent`, `person`, `actor_claim` on the decision record, read from the token the gateway saw | agent runtime claims it; the gateway records what the token said |
 | 5 | Policy decision | the decision record: `decision`, `rule`, `policy`, `policy_version`, `reason`, `approvals`, `approval_id` | tool gateway, to its own file; the collector reads the file |
-| 6 | Retrieval lineage | `aquaflux.retrieval.documents` | not produced in this lab; ground-the-assistant's agent would write it |
+| 6 | Retrieval lineage | `aquaflux.retrieval.documents` | not produced in this lab; ground-the-answer's agent would write it |
 | 7 | Evaluation and screening verdicts | `aquaflux.evaluation.*` | not produced in this lab |
 | 8 | System of record confirmation | `aquaflux.work_order.id` and `aquaflux.idempotency_key` on the tool span; `work_order_id` on the decision record | agent runtime, from what the API returned, if the adapter writes it |
 
