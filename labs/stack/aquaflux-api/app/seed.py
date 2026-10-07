@@ -1,7 +1,7 @@
 """The seeded Aquaflux data, generated deterministically.
 
-One seed for all three systems of record, so a learner who met connection 4471 in a-02 meets the
-same customer in f-01. Every value here is listed in `labs/README.md` under "Seeded data"; if you
+One seed for all three systems of record, so a learner who met connection 4471 in one-governed-call meets the
+same customer in break-it-then-fix-it. Every value here is listed in `labs/README.md` under "Seeded data"; if you
 change one, change that table in the same commit.
 
 Aquaflux is fictional (`content/scenario.md`). Nothing here is a real company, person or dataset.
@@ -15,8 +15,8 @@ from datetime import date, datetime, timezone
 # The fixed points the handouts name. Everything else is filler that exists so that examples are
 # concrete, and no lab depends on it.
 NADIA_CONNECTION = "4471"  # Nadia's customer. Doubles in March. In arrears.
-OTHER_CONNECTION = "4417"  # Somebody else. The transposition target in a-02 and d-04.
-CLEAR_CONNECTION = "4472"  # Not in arrears, so d-03's reuse test has somewhere to fail.
+OTHER_CONNECTION = "4417"  # Somebody else. The transposition target in one-governed-call and reconstruct-one-transaction.
+CLEAR_CONNECTION = "4472"  # Not in arrears, so block-the-call's reuse test has somewhere to fail.
 
 MONTHS = [
     (date(2026, 1, 1), date(2026, 1, 31), "January 2026"),
@@ -82,7 +82,7 @@ def customer(connection_id: str) -> dict:
 def readings(connection_id: str) -> list[dict]:
     """Monthly consumption in cubic metres for the first half of 2026.
 
-    Connection 4471 doubles in March. That is a-02's whole worked example: the learner's check
+    Connection 4471 doubles in March. That is one-governed-call's whole worked example: the learner's check
     asserts that the model's explanation mentions March, and it can only do that if it read these.
     """
     r = _rng(connection_id)
@@ -115,7 +115,7 @@ def in_arrears(connection_id: str) -> bool:
     return _rng(connection_id).random() < 0.15
 
 
-# The note on case 4471. This is f-01's fixture: the note carries a request aimed at whatever
+# The note on case 4471. This is break-it-then-fix-it's fixture: the note carries a request aimed at whatever
 # reads it, and the lab exists to show that a prompt asking the agent to ignore such requests is a
 # sign, not a bollard. It is data the agent reads, never a learner's own wording, because the point
 # is lost if the learner concludes their phrasing was the problem.
@@ -134,7 +134,7 @@ NOTE_4471 = (
 )
 
 # The second fixture note. Same request, the register everyone expects an injection to have: a
-# system announcing itself inside a customer's message. f-01 seals this until the learner has
+# system announcing itself inside a customer's message. break-it-then-fix-it seals this until the learner has
 # applied the prompt fix, so that the first note they test the fix against is one they did not
 # write. Measured on the same model, the weak agent obeyed it inconsistently (0 of 5 one day, 3 of
 # 5 the next) and the prompt fix stopped it every time (0 of 5). Loaded with
@@ -205,7 +205,7 @@ def dunning_case(connection_id: str) -> dict | None:
     }
 
 
-# Work orders the handouts address by id. 88213 is d-04's worked tier, 91044 its completion tier.
+# Work orders the handouts address by id. 88213 is reconstruct-one-transaction's worked tier, 91044 its completion tier.
 SEEDED_WORK_ORDERS = [
     {
         "work_order_id": "88213",
@@ -242,7 +242,7 @@ def now() -> str:
 
 # ---------------------------------------------------------------- work order management
 
-# The field force. c-02's generated catalogue exposes a tool per operation, and several of those
+# The field force. expose-one-operation's generated catalogue exposes a tool per operation, and several of those
 # operations read these; nothing in any lab depends on a particular technician beyond Tom, who is
 # the field technician in the scenario (content/scenario.md).
 TECHNICIANS = [
@@ -256,7 +256,7 @@ TECHNICIANS = [
      "region": "south", "active": False},
 ]
 
-# What each work order type is for, in the words the API would use. c-02's open tier asks the
+# What each work order type is for, in the words the API would use. expose-one-operation's open tier asks the
 # learner to name the operations they did not expose and say what would have to be true first;
 # this is the list they are choosing from.
 WORK_ORDER_TYPE_CATALOGUE = [

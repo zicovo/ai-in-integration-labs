@@ -1,7 +1,7 @@
 """Tool policy: which agent may call which tool, on whose authority, and what happens if not.
 
 A policy is a short YAML document with an id and a version, because four handouts ask a learner
-to read one, diff two, or write a third. It is deliberately not code. `d-03` moves the decision
+to read one, diff two, or write a third. It is deliberately not code. `block-the-call` moves the decision
 out to Open Policy Agent and rewrites these rules in Rego; the shape below is what that has to
 reproduce, and `decide()` is the seam.
 
@@ -23,7 +23,7 @@ Three decisions, and the third is the one the course is about:
     hold    the call does not happen yet, because a named human has to agree first
 
 A gateway that can only allow and deny pushes every judgement into the model's prompt. `hold` is
-what lets a rule say "not without Sam", which is the rule c-02 asks the learner to write and the
+what lets a rule say "not without Sam", which is the rule expose-one-operation asks the learner to write and the
 reason the catalogue has to be split before it can be written at all.
 """
 
@@ -74,7 +74,7 @@ class Policy:
     opa_package: str = "aquaflux/tools"  # engine: opa only, the document that decides
     # enforce, or log-only. Log-only asks the engine as usual, records what it decided with
     # `enforced: false`, and forwards the call anyway: the shadow run before a policy is switched
-    # on, which d-03's instructor note asked for. Identity and an unknown tool are refused either
+    # on, which block-the-call's instructor note asked for. Identity and an unknown tool are refused either
     # way, because those are not the policy's decision.
     enforcement: str = "enforce"
 
@@ -120,7 +120,7 @@ def decide(policy: Policy, tool: str, identity: dict, arguments: dict | None = N
            approvals: list[dict] | None = None) -> Decision:
     """Decide one call with the rules in the document. `engine: opa` documents go through opa.py.
 
-    The order of the checks is load-bearing and d-02 grades on it: a token that is both addressed
+    The order of the checks is load-bearing and carry-the-authority grades on it: a token that is both addressed
     to the wrong resource and carries too much scope is refused for its audience first, because
     an audience says which door this key was cut for and a scope says what it opens once inside.
     A learner who can say which fault the gateway caught first has understood the difference.
@@ -160,7 +160,7 @@ def decide(policy: Policy, tool: str, identity: dict, arguments: dict | None = N
     if rule.decision == "hold":
         # A hold is not a dead end. An approval from the named approver, for the action this
         # rule names, bound to the connection in the call, releases it. That binding is the
-        # whole of what makes an approval evidence rather than theatre (d-03), and it is why the
+        # whole of what makes an approval evidence rather than theatre (block-the-call), and it is why the
         # approval carries a connection id rather than a yes.
         released = _releasing_approval(rule, arguments or {}, approvals or [], person)
         if released:
@@ -189,7 +189,7 @@ def decide(policy: Policy, tool: str, identity: dict, arguments: dict | None = N
 def _releasing_approval(rule: Rule, arguments: dict, approvals: list[dict], person: str | None) -> dict | None:
     """The first active approval that releases this hold, or None.
 
-    Four conditions, the same four d-03 asks the learner to write in Rego: the named approver
+    Four conditions, the same four block-the-call asks the learner to write in Rego: the named approver
     gave it, for the action the rule names, for the connection in these arguments, and the
     approver is not the person the agent is acting for.
     """

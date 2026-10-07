@@ -493,7 +493,7 @@
     {
       "clientId": "meter-check-workflow",
       "name": "Meter check workflow",
-      "description": "e-03's durable workflow. It acts for Nadia the way the reading assistant does, with an identity of its own, so the gateway log, the work order and the trace name the workflow and not the chat agent it grew out of.",
+      "description": "survive-the-crash's durable workflow. It acts for Nadia the way the reading assistant does, with an identity of its own, so the gateway log, the work order and the trace name the workflow and not the chat agent it grew out of.",
       "enabled": true,
       "publicClient": false,
       "secret": "meter-check-workflow-secret",
@@ -543,7 +543,7 @@
     {
       "clientId": "collections-agent",
       "name": "Aquaflux collections agent",
-      "description": "The agent that runs the dunning steps for overdue accounts, acting for Els or Sam. d-03 and f-01 run it. Its token is exchanged from the collections officer's own.",
+      "description": "The agent that runs the dunning steps for overdue accounts, acting for Els or Sam. block-the-call and break-it-then-fix-it run it. Its token is exchanged from the collections officer's own.",
       "enabled": true,
       "publicClient": false,
       "secret": "collections-agent-secret",

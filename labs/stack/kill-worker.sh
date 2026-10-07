@@ -3,7 +3,7 @@
 #
 #   labs/stack/kill-worker.sh
 #
-# e-03 calls this by name, inside the pause window the run prints. SIGKILL and nothing else: a
+# survive-the-crash calls this by name, inside the pause window the run prints. SIGKILL and nothing else: a
 # graceful stop lets the worker finish the activity it is in, the engine records the write as
 # confirmed, and the lesson never happens. What this stands in for is a process that dies, a
 # node that is drained by force, a deploy that does not wait.

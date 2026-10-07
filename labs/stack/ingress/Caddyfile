@@ -107,7 +107,7 @@ https://traces.aquaflux.internal:16686 {
 }
 
 # The collector's health extension, and beside it the audit store it writes: the file exporter's
-# output, served read-only from the shared volume, so that d-04's evidence has an address. A
+# output, served read-only from the shared volume, so that reconstruct-one-transaction's evidence has an address. A
 # real deployment puts this in object storage with a retention rule; here it is a directory.
 https://collector.aquaflux.internal:13133 {
 	import served

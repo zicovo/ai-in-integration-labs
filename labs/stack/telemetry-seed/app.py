@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed the trace store with the history d-04 promises: about two hundred past runs.
+"""Seed the trace store with the history reconstruct-one-transaction promises: about two hundred past runs.
 
 The handout says the trace store is not empty when the lab starts, and that two of the runs in
 it are the ones the regulator asks about: work order 88213 on connection 4471 (the worked tier)
@@ -19,7 +19,7 @@ system executed name 4417. The two hashes differ. Nothing failed.
 
 The spans go through the collector, not straight to the trace store, so they land in the audit
 store as well and the history is the same in both. The decision lines go straight to the file.
-Nothing here is named to a learner; it is a fixture, like the seeding proxy in a-02.
+Nothing here is named to a learner; it is a fixture, like the seeding proxy in one-governed-call.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ TRACES = os.environ.get("AQUAFLUX_TRACES", "http://traces:16686")
 DECISION_LOG = pathlib.Path(os.environ.get("AQUAFLUX_DECISION_LOG", "/var/log/tool-gateway/decisions.jsonl"))
 RUNS = int(os.environ.get("AQUAFLUX_SEED_RUNS", "200"))
 
-# The two runs the handouts address. The first trace id is the one d-04's study text prints.
+# The two runs the handouts address. The first trace id is the one reconstruct-one-transaction's study text prints.
 WORKED = {"trace_id": "0af7651916cd43dd8448eb211c80319c", "work_order_id": "88213", "connection": "4471",
           "at": "2026-06-15T10:04:31Z", "key": "wo-88213-a1", "reason": "disputed_reading",
           "question": "the customer on 4471 says their bill doubled, can someone check the meter"}

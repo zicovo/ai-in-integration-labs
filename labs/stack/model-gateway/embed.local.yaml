@@ -1,5 +1,5 @@
 # The embedding model on the local runtime. The fallback for embeddings whatever the chat model
-# does: a hosted resource often has a chat deployment and no embedding one, and b-01's vectors
+# does: a hosted resource often has a chat deployment and no embedding one, and index-the-manuals's vectors
 # have to come from somewhere. Which model and which runtime is announced at startup; the
 # handout tells the learner to read the name and the vector length from the smoke test.
   - model_name: aquaflux-embed

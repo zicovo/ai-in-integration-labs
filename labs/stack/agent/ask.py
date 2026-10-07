@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The Aquaflux reading assistant: one question, whatever tools the gateway currently publishes.
 
-This is the agent c-02 runs. It is deliberately small enough to read in one sitting, because the
+This is the agent expose-one-operation runs. It is deliberately small enough to read in one sitting, because the
 lab is about what the model does with a tool catalogue and everything else here is scaffolding:
 
     1. sign in as Nadia, and exchange her token for one the agent holds while acting for her
@@ -14,13 +14,13 @@ Step two is the line that matters. The descriptions and schemas the model sees a
 learner wrote, transcribed by the SDK and passed on by the gateway. Nothing in this file improves
 them, and that is why the lab works: whatever the model books, the catalogue let it.
 
-`--token` prints the exchanged token and stops, so c-02's worked tier can make one call by hand
-with the same identity the agent uses, and read the two log lines side by side. d-02 is where the
+`--token` prints the exchanged token and stops, so expose-one-operation's worked tier can make one call by hand
+with the same identity the agent uses, and read the two log lines side by side. carry-the-authority is where the
 token is the lesson; here it is plumbing.
 
 Every run is one trace (telemetry.py): a root span for the run, a `chat` span per model call and
 an `execute_tool` span per tool call, with `traceparent` sent to both gateways so their spans
-join it. d-04 is the lab that reads it, and its second seeded fault lives in `call_tool()` below:
+join it. reconstruct-one-transaction is the lab that reads it, and its second seeded fault lives in `call_tool()` below:
 the work order API returns an id, the gateway passes it on, and nothing here writes it, or the
 idempotency key, onto the span. Two lines, and the handout has the learner add them.
 
@@ -53,7 +53,7 @@ tracer = telemetry.setup(CONFIG["client_id"])
 
 
 def token() -> str:
-    """Nadia's authority, carried by the agent. d-02 is the lab about this; here it is plumbing."""
+    """Nadia's authority, carried by the agent. carry-the-authority is the lab about this; here it is plumbing."""
     endpoint = f"{IDP}/protocol/openid-connect/token"
     person = requests.post(
         endpoint,
@@ -155,7 +155,7 @@ def call_tool(name: str, arguments: dict, bearer: str, call_id: str | None = Non
 
     The span carries the tool, the argument hash and the gateway's call id. It does not carry
     what the tool created: the API returned a work order id and the adapter's job was to create
-    the work order, which it did. d-04 finds out what that costs.
+    the work order, which it did. reconstruct-one-transaction finds out what that costs.
     """
     with tracer.start_as_current_span(f"execute_tool {name}") as span:
         telemetry.record_tool_call(span, name, arguments, call_id)
@@ -281,7 +281,7 @@ def main() -> int:
             print("\n  the model chose no tool.")
         print(f"\n  {reply.get('content') or '(no answer)'}\n")
         # Point at the write, when there was one: the model often reads after it writes, and
-        # the last line is then a harmless list_* call rather than the one c-02 asks about.
+        # the last line is then a harmless list_* call rather than the one expose-one-operation asks about.
         writes = [c["tool"] for c in transcript if c["tool"].startswith("create_")]
         query = f"tool={writes[-1]}&limit=1" if writes else "limit=1"
         print(f"  Read the decision log:  curl -s '{TOOLS}/logs?{query}' | python3 -m json.tool")

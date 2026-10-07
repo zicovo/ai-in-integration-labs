@@ -1,16 +1,16 @@
 """Bearer token validation for the Aquaflux stand-ins.
 
-d-02's instructor note asks for "the work order API stand-in accepting a bearer token and
+carry-the-authority's instructor note asks for "the work order API stand-in accepting a bearer token and
 rejecting a wrong audience with 401 and `WWW-Authenticate`". That refusal is the moment the lab
 turns on: the learner has a token that is perfectly valid, signed by the right issuer, naming the
 right person, and it is refused because it was addressed to the meter data system.
 
 **A token is validated when one is presented, and not demanded when one is not.** That is
-deliberate and it is a property of the stand-in, not of the architecture it stands in for. c-02
-exercises the tool contract and never mentions identity; d-02 exercises identity. Demanding a
+deliberate and it is a property of the stand-in, not of the architecture it stands in for. expose-one-operation
+exercises the tool contract and never mentions identity; carry-the-authority exercises identity. Demanding a
 token everywhere would break the first lab to teach nothing the second does not already. Set
 `AQUAFLUX_BEARER=required` on the service to demand one, which is what a delivery that has
-reached d-02 should do.
+reached carry-the-authority should do.
 
 Signatures are checked against the realm's published keys, fetched by the identity provider's
 Compose service name over plain HTTP. The issuer inside the token is the public https address and
@@ -76,7 +76,7 @@ def authorise(request: Request, scope: str | None = None) -> dict | None:
         raise _refuse("invalid_token", f"The signing key could not be resolved: {error}")
 
     # Audience is checked separately, so that its refusal can say something more useful than
-    # "invalid token". Getting the audience wrong is the whole of d-02's seeded fault.
+    # "invalid token". Getting the audience wrong is the whole of carry-the-authority's seeded fault.
     try:
         claims = jwt.decode(
             token,

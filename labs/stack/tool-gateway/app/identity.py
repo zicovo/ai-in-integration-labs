@@ -2,7 +2,7 @@
 
 The gateway validates a bearer token when one is presented: signature against the realm's
 published keys, issuer, expiry. What it does with the audience and the scope is the policy's
-business, not this module's, because those are the two things d-02 asks a learner to get right
+business, not this module's, because those are the two things carry-the-authority asks a learner to get right
 and a gateway that hard-codes them has nothing left to teach.
 
 This is deliberately the same shape as `labs/stack/aquaflux-api/app/bearer.py`, including the

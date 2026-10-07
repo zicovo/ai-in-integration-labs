@@ -1,8 +1,8 @@
 """Read-only pages over the in-memory state of the three systems of record.
 
 A learner sees these systems through the API and the terminal, and some lab results are easier
-to believe when they are on screen: e-03's two work orders for one connection, the dunning case
-f-01's agent moved, the March that doubles in a-02. Each system serves one page at `/`, in the lab
+to believe when they are on screen: survive-the-crash's two work orders for one connection, the dunning case
+break-it-then-fix-it's agent moved, the March that doubles in one-governed-call. Each system serves one page at `/`, in the lab
 browser, next to its API.
 
 Three rules, all deliberate:
@@ -10,9 +10,9 @@ Three rules, all deliberate:
 - **The page reads the same dictionaries the API writes**, so it is never out of date and a
   reset clears it too. There is no second copy of the data and nothing to synchronise.
 - **It changes nothing and interprets nothing.** No buttons, and no "possible duplicate" flags:
-  e-03 asks the learner to prove from the work order system what happened, and a page that
+  survive-the-crash asks the learner to prove from the work order system what happened, and a page that
   pointed at the answer would do the lab for them.
-- **It is not in the OpenAPI document.** c-02 generates its twenty-three tools from that
+- **It is not in the OpenAPI document.** expose-one-operation generates its twenty-three tools from that
   document, so a page that appeared in it would become a twenty-fourth tool.
 
 Every value is escaped. Case 4471 carries a note written to steer whatever reads it, and a page

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Replay the calls d-03's policy must refuse, as the collections agent acting for a person.
+# Replay the calls block-the-call's policy must refuse, as the collections agent acting for a person.
 #
 #   labs/stack/attack.sh --agent collections-agent --on-behalf-of els --connection 4471
 #

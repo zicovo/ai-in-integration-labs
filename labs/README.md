@@ -52,11 +52,11 @@ The model gateway's key is in `$LAB_GATEWAY_KEY`.
 | `aqx ui` | Starts the lab browser at <http://localhost:3000> |
 | `aqx reset` | Puts the seeded work orders, dunning cases and approvals back |
 | `aqx down` | Stops the stack |
-| `labs/stack/ask.sh` | Runs the reading assistant, the agent c-02, d-02 and d-04 use |
+| `labs/stack/ask.sh` | Runs the reading assistant, the agent expose-one-operation, carry-the-authority and reconstruct-one-transaction use |
 | `labs/stack/register-tool-server.sh <dir> <port>` | Starts an MCP server from a directory and registers it at the tool gateway |
 | `labs/stack/approve.sh` | Records an approval, signing the approver in at that moment |
-| `labs/stack/start-worker.sh <dir>`, `labs/stack/kill-worker.sh` | e-03: start the workflow worker on a directory, and kill it without warning |
-| `labs/stack/run-workflow.sh` | e-03: start a run and follow it |
+| `labs/stack/start-worker.sh <dir>`, `labs/stack/kill-worker.sh` | survive-the-crash: start the workflow worker on a directory, and kill it without warning |
+| `labs/stack/run-workflow.sh` | survive-the-crash: start a run and follow it |
 
 ## When something is wrong
 

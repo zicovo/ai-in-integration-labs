@@ -1,6 +1,6 @@
 # The embedding model on an OpenAI-compatible hosted endpoint. Appended to the model list by
 # entrypoint.sh only when the endpoint answered a real embedding request for this deployment;
-# otherwise embed.local.yaml is used, whatever the chat model does. b-01 and b-02 embed through
+# otherwise embed.local.yaml is used, whatever the chat model does. index-the-manuals and ground-the-assistant embed through
 # the same gateway, so the same key, budget and log cover it.
   - model_name: aquaflux-embed
     litellm_params:

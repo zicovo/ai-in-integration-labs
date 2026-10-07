@@ -1,6 +1,6 @@
 """The Aquaflux approval service: a notary, not a judge.
 
-d-03 turns on the difference between an approval that is evidence and one that is theatre. The
+block-the-call turns on the difference between an approval that is evidence and one that is theatre. The
 study text gives three properties of the first kind: bound to the arguments, given by somebody who
 re-authenticated, and given by somebody other than the person who initiated. This service records
 the first two and leaves the third to the policy, on purpose.
@@ -51,7 +51,7 @@ JWKS_URL = os.environ.get(
     "http://identity:8080/realms/aquaflux/protocol/openid-connect/certs",
 )
 # The audience an approval token has to be addressed to. A token cut for the reading assistant is
-# not a token for approving disconnections, which is d-02's lesson applied to this door.
+# not a token for approving disconnections, which is carry-the-authority's lesson applied to this door.
 AUDIENCE = os.environ.get("AQUAFLUX_AUDIENCE", "approvals-api")
 DEFAULT_TTL_MINUTES = int(os.environ.get("AQUAFLUX_APPROVAL_TTL_MINUTES", "30"))
 

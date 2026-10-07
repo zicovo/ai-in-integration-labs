@@ -50,10 +50,10 @@ The first build takes a few minutes. When it is done, the terminal prints a welc
 dev container's terminal**, run the first smoke test:
 
 ```sh
-labs/stack/smoke.sh a-02
+labs/stack/smoke.sh one-governed-call
 ```
 
-It starts what module a-02 needs, pulls a model if it has to, and checks everything the handout
+It starts what lab one-governed-call needs, pulls a model if it has to, and checks everything the handout
 promises. A list of green `ok` lines ending in "Smoke test passed" means you are ready. If a line
 says `FAIL`, that is the stack's problem, not yours: send the output to your instructor.
 
@@ -62,7 +62,7 @@ says `FAIL`, that is the stack's problem, not yours: send the output to your ins
 - **Run every command in the dev container's terminal.** Tools such as `jq`, `psql` and `opa` are
   installed there and not on your machine.
 - **Every lab starts with its smoke test:** `labs/stack/smoke.sh <module>`, for example
-  `labs/stack/smoke.sh c-02`. It starts only what that lab needs and puts the lab's data back the
+  `labs/stack/smoke.sh expose-one-operation`. It starts only what that lab needs and puts the lab's data back the
   way the handout expects.
 - **A browser on the lab network:** `aqx ui`, then open <http://localhost:3000>. Its start page
   lists every service, and the lab's certificate is already trusted there.

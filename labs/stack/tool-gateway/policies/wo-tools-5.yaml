@@ -1,6 +1,6 @@
-# wo-tools-4, with e-03's workflow as a second agent.
+# wo-tools-4, with survive-the-crash's workflow as a second agent.
 #
-# e-03 runs the meter check as a durable workflow. The workflow is not the reading assistant: it
+# survive-the-crash runs the meter check as a durable workflow. The workflow is not the reading assistant: it
 # is a different piece of software with a different failure mode, and until 2026-09-24 it
 # borrowed the reading assistant's client, so the gateway log and the work order named the chat
 # agent for something the workflow did. It now has its own client in the realm,
@@ -8,7 +8,7 @@
 # terms as the reading assistant: acting for a person, with a token addressed to the work order
 # API and carrying only the scope the tool needs.
 #
-# d-02 reads wo-tools-4 and is not changed by this. smoke.sh loads this one for e-03 only.
+# carry-the-authority reads wo-tools-4 and is not changed by this. smoke.sh loads this one for survive-the-crash only.
 
 id: wo-tools-5
 version: "1"

@@ -1,12 +1,12 @@
 # The same catalogue, with the token taken seriously.
 #
-# d-02 activates this one. wo-tools-3 logs whatever identity a call happens to carry and decides
+# carry-the-authority activates this one. wo-tools-3 logs whatever identity a call happens to carry and decides
 # on the tool name alone; this one refuses a call that carries no token, refuses a token
 # addressed to another resource, and refuses a token that does not carry the scope the tool
 # needs. Nothing about the tools changed. What changed is what the gateway is willing to accept
-# as authority, and that is d-02's whole subject.
+# as authority, and that is carry-the-authority's whole subject.
 #
-# The order of those checks is in app/policy.py and d-02 grades on it: audience before scope.
+# The order of those checks is in app/policy.py and carry-the-authority grades on it: audience before scope.
 
 id: wo-tools-4
 version: "1"

@@ -90,7 +90,7 @@ images:
     platforms: [linux/amd64, linux/arm64, linux/s390x, linux/ppc64le]
     used_by: [showcase]
     note: >
-      A release candidate, and named as one in c-02's handout. Evaluated as the tool gateway
+      A release candidate, and named as one in expose-one-operation's handout. Evaluated as the tool gateway
       for the labs and not chosen, for measured reasons in ADR-021; kept as a showcase so the
       room meets a real product's console and its tool renaming. Forces a password change on
       first login unless ADMIN_REQUIRE_PASSWORD_CHANGE_ON_BOOTSTRAP is false, and refuses to
@@ -103,7 +103,7 @@ images:
     used_by: [db]
     note: >
       PostgreSQL 17 with the pgvector extension available, version 0.8.6 at the time of checking,
-      which is the version b-01's handout names. The extension is installed by `create extension`
+      which is the version index-the-manuals's handout names. The extension is installed by `create extension`
       in the learner's schema, not by the image.
 
   - role: vector engine
@@ -112,7 +112,7 @@ images:
     platforms: [linux/amd64, linux/arm64]
     used_by: [vectors]
     note: >
-      For b-01's open tier comparison only; it starts empty and no handout command loads it. The
+      For index-the-manuals's open tier comparison only; it starts empty and no handout command loads it. The
       image has bash and no curl, so the Compose health check speaks HTTP through /dev/tcp and
       must be run by bash by name: CMD-SHELL uses /bin/sh, which is dash here and has no /dev/tcp.
 
@@ -122,7 +122,7 @@ images:
     platforms: [linux/386, linux/amd64, linux/arm, linux/arm64, linux/ppc64le, linux/riscv64, linux/s390x]
     used_by: [collector]
     note: >
-      The contrib distribution, for the file_log receiver and the file exporter d-04 turns on.
+      The contrib distribution, for the file_log receiver and the file exporter reconstruct-one-transaction turns on.
       No shell, so no Compose health check; the health_check extension answers on 13133 and
       smoke.sh curls it through the ingress. Runs as uid 10001, and a fresh named volume is
       root-owned, so the service runs as root in its container or the file exporter cannot
@@ -135,12 +135,12 @@ images:
     platforms: [linux/amd64, linux/arm64, linux/ppc64le, linux/s390x]
     used_by: [traces]
     note: >
-      Version 2, built on the collector. Memory storage by default, which is the point d-04 makes
+      Version 2, built on the collector. Memory storage by default, which is the point reconstruct-one-transaction makes
       about retention: it restarts empty and telemetry-seed refills it. OTLP in on 4317 and 4318,
       the viewer and the query API on 16686. The query API is /api/v3 only on this version:
       /api/v3/services, /api/v3/traces/<id>, and /api/v3/traces with query.service_name, a
       required time window and query.attributes as a URL-encoded JSON map. The older
-      /api/traces?service=...&tags=... search answers 404, which d-04's first draft assumed and
+      /api/traces?service=...&tags=... search answers 404, which reconstruct-one-transaction's first draft assumed and
       `aqx trace` now wraps.
 
   - role: workflow engine, development mode
@@ -154,19 +154,19 @@ images:
       its own user, no shell, so the Compose health check is the CLI asking its own server. The
       web interface is proxied by the ingress on 8233; the gRPC front end on 7233 is reached by
       service name only, by the worker and the run script in the dev container. Memory rather
-      than a database file on purpose: the engine is never restarted during e-03, only the
+      than a database file on purpose: the engine is never restarted during survive-the-crash, only the
       worker is, and a fresh named volume would be root-owned for a non-root image (the
       collector and the showcase both met that).
 
 packages:
 
   # Not images, but the same problem: they are pinned, they move, and a lab breaks silently when
-  # they do. The MCP SDK is the one a learner writes against in c-02.
+  # they do. The MCP SDK is the one a learner writes against in expose-one-operation.
 
   - name: opa (command line, in the dev container)
     version: "1.20.2"
     checked: 2026-09-21
-    used_by: [workspace, the learner's `opa test policy/` in d-03 and f-01]
+    used_by: [workspace, the learner's `opa test policy/` in block-the-call and break-it-then-fix-it]
     note: >
       The static binary from openpolicyagent.org/downloads, verified against its published
       sha256 at build time in .devcontainer/Dockerfile. Same version as the `policy` service, so
@@ -180,29 +180,29 @@ packages:
     note: >
       What the agents and the gateway write their spans with, over OTLP/HTTP. The exporter is
       installed only when a collector answers a probe, so the other labs run with the telemetry
-      profile down and nothing slows or logs. d-04's second fix is two `set_attribute` lines in
+      profile down and nothing slows or logs. reconstruct-one-transaction's second fix is two `set_attribute` lines in
       this API, in labs/stack/agent/ask.py.
 
   - name: temporalio
     version: "1.33.0"
     checked: 2026-09-22
-    used_by: [workspace, the worker and the run script in labs/e-03 and labs/stack/workflow]
+    used_by: [workspace, the worker and the run script in labs/survive-the-crash and labs/stack/workflow]
     note: >
       The engine's Python SDK, with a Rust core: it publishes abi3 wheels for manylinux x86_64
       and aarch64, checked with `pip download --platform`, so the dev container builds on both
       architectures without a compiler. Its OpenTelemetry interceptor
       (temporalio.contrib.opentelemetry) carries the trace context in the workflow's headers,
-      which is how e-03's resumed activity joins the trace the request opened. Heartbeats are
+      which is how survive-the-crash's resumed activity joins the trace the request opened. Heartbeats are
       throttled by the SDK to most of the heartbeat timeout by default; the worker sets the
-      throttle to two seconds (labs/e-03/*/worker.py says why).
+      throttle to two seconds (labs/survive-the-crash/*/worker.py says why).
 
   - name: mcp
     version: "2.2.0"
     checked: 2026-09-21
-    used_by: [workspace, tools, the learner's own server in c-02]
+    used_by: [workspace, tools, the learner's own server in expose-one-operation]
     note: >
       Version 2 renamed `FastMCP` to `MCPServer` and the model fields to snake_case
-      (`input_schema`, `output_schema`, `is_error`). c-02's handout prints `MCPServer`, which is
+      (`input_schema`, `output_schema`, `is_error`). expose-one-operation's handout prints `MCPServer`, which is
       correct for 2.x and wrong for 1.x, and version 1 code raises an import error saying so.
       The gateway reads both spellings where the wire and the model disagree.
 
@@ -213,7 +213,7 @@ models:
     size_on_disk: 1.9 GB
     measured: 2026-09-20
     note: >
-      Measured against a-02's two requirements on this stack. Tool calling five runs out of five,
+      Measured against one-governed-call's two requirements on this stack. Tool calling five runs out of five,
       strict JSON output through the gateway, about seven to fifteen seconds per call on a
       laptop CPU with no GPU passed through. qwen2.5:7b-instruct was measured beside it and
       behaved identically on every check, including reproducing the same malformed date arguments,
@@ -228,7 +228,7 @@ models:
       768 dimensions. The hosted endpoint of dec:OD-025 has a chat deployment and no embedding
       one (the configured embedding deployment answers DeploymentNotFound), so the gateway probes
       the hosted embedding at startup and falls back to this model on the local runtime when it
-      does not answer, whatever the chat model does. Pulled by `smoke.sh b-01` when missing.
+      does not answer, whatever the chat model does. Pulled by `smoke.sh index-the-manuals` when missing.
       Measured over the twenty documents: every answerable question's best similarity between
       0.81 and 0.91, the identifier question 0.62 with the asset sheet ninth, the out-of-corpus
       question 0.68. 104 chunks embed in about eight seconds on a laptop CPU.

@@ -87,7 +87,7 @@ services:
     volumes:
       - tls:/etc/aquaflux/tls:ro
       # The audit store, served read-only at collector.aquaflux.internal:13133/audit/ so that
-      # d-04's evidence has an address a handout can print (Caddyfile, "evidence and state").
+      # reconstruct-one-transaction's evidence has an address a handout can print (Caddyfile, "evidence and state").
       - audit:/srv/audit:ro
     ports:
       # For a browser on the host. It needs a hosts file entry to be useful, which is why the
@@ -131,9 +131,9 @@ services:
     profiles: [core]
     environment:
       AQUAFLUX_SYSTEM: wom
-      # A token is validated when one is presented and not demanded when one is not. c-02
-      # exercises the tool contract and never mentions identity; d-02 exercises identity.
-      # app/bearer.py explains the choice. Set `required` for a delivery past d-02.
+      # A token is validated when one is presented and not demanded when one is not. expose-one-operation
+      # exercises the tool contract and never mentions identity; carry-the-authority exercises identity.
+      # app/bearer.py explains the choice. Set `required` for a delivery past carry-the-authority.
       AQUAFLUX_BEARER: optional
       AQUAFLUX_AUDIENCE: wom-api
       # By service name, not by the public name: this never leaves the network, so it has no
@@ -141,8 +141,8 @@ services:
       AQUAFLUX_JWKS_URL: http://identity:8080/realms/aquaflux/protocol/openid-connect/certs
 
   # ------------------------------------------------------- profiles: model, retrieval
-  # One database for the whole stack. b-01 and b-02 put their vectors here, and the model gateway
-  # writes its call log here, which is why it starts with the `model` profile too: a-02's
+  # One database for the whole stack. index-the-manuals and ground-the-assistant put their vectors here, and the model gateway
+  # writes its call log here, which is why it starts with the `model` profile too: one-governed-call's
   # acceptance check asks the learner to find both runs in the gateway log with their token
   # counts, and without a store behind it that endpoint returns a 500 rather than a log.
 
@@ -187,7 +187,7 @@ services:
       default:
         aliases: [ollama.aquaflux.internal]
 
-  # Seeds a-02's configuration two. Never named to a learner; see model-seed/app.py.
+  # Seeds one-governed-call's configuration two. Never named to a learner; see model-seed/app.py.
   seed:
     build:
       context: ./model-seed
@@ -231,7 +231,7 @@ services:
       AQUAFLUX_EMBED_MODEL: nomic-embed-text
       DATABASE_URL: postgresql://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux
       STORE_MODEL_IN_DB: "True"
-      # Spans to the collector, joined to the caller's trace through `traceparent` (d-04,
+      # Spans to the collector, joined to the caller's trace through `traceparent` (reconstruct-one-transaction,
       # artefact three: which model actually answered). The product honours W3C Trace Context
       # on its own; config.yaml turns the callback on. When the telemetry profile is down the
       # exporter writes a traceback per batch into this container's log, which nobody reads
@@ -259,7 +259,7 @@ services:
       start_period: 15s
 
   # -------------------------------------------------------------- profile: identity
-  # d-02's central artefact is a token, so this is the one service in the stack that speaks TLS.
+  # carry-the-authority's central artefact is a token, so this is the one service in the stack that speaks TLS.
   # The handout's smoke test is a plain `curl -s https://idp.aquaflux.internal/...` with no flag
   # to skip verification, and it should stay that way: a lab that teaches people to reach for
   # --insecure has taught them something. identity/entrypoint.sh generates the certificate into
@@ -344,7 +344,7 @@ services:
   # The door in front of every MCP server the labs publish. Written for the labs rather than
   # taken off the shelf; ADR-021 records what was measured and why.
   #
-  # It reaches the learner's own MCP server at workspace.aquaflux.internal, because in c-02 the
+  # It reaches the learner's own MCP server at workspace.aquaflux.internal, because in expose-one-operation the
   # server runs as a process in the dev container on 8850 or 8851 and not as a container. That
   # is deliberate: the learner edits server.py and re-registers, and a rebuild between those two
   # would make the loop too slow to iterate in.
@@ -368,7 +368,7 @@ services:
       # unaffected because they decide in-process.
       AQUAFLUX_OPA_URL: http://policy:8181
       AQUAFLUX_APPROVALS_URL: http://approvals:80
-      # d-04. Every decision record is also appended to this file, with the trace id of the
+      # reconstruct-one-transaction. Every decision record is also appended to this file, with the trace id of the
       # call, and every call is one span sent to the collector. The file is the gateway's own
       # durable log; whether the collector reads it is the collector's configuration, which is
       # the lab. app/telemetry.py drops the spans quietly when the telemetry profile is down.
@@ -437,7 +437,7 @@ services:
   # ---------------------------------------------------------------- profile: policy
   # The decision point beside the enforcement point (ADR-022). Three services: the policy engine
   # the learner writes for, the approval service that records who said yes to what, and the
-  # collections agent's tool server, which is the catalogue d-03 and f-01 put behind the gateway.
+  # collections agent's tool server, which is the catalogue block-the-call and break-it-then-fix-it put behind the gateway.
   #
   # The engine starts empty on purpose. The rules are the learner's own policy/ directory and
   # `aqx policy apply` is how they reach it; smoke.sh applies the module's starting policy so the
@@ -486,9 +486,9 @@ services:
       start_period: 5s
 
   # The collections agent's tools. A container rather than a process in the dev container,
-  # unlike c-02's servers, because no tier of d-03 or f-01 edits it: it is fixture, and a fixture
+  # unlike expose-one-operation's servers, because no tier of block-the-call or break-it-then-fix-it edits it: it is fixture, and a fixture
   # should survive a closed terminal. The gateway reaches it by service name; smoke.sh registers
-  # it. It publishes both the specific disconnection tool and the generic one, which is d-03's
+  # it. It publishes both the specific disconnection tool and the generic one, which is block-the-call's
   # seeded failure and is documented in collections-tools/server.py.
   collections-tools:
     build:
@@ -507,7 +507,7 @@ services:
       start_period: 5s
 
   # ------------------------------------------------------------- profile: retrieval
-  # The dedicated vector engine b-01's open tier compares against the database (ADR-024). `db`
+  # The dedicated vector engine index-the-manuals's open tier compares against the database (ADR-024). `db`
   # above is the other half of that comparison and already carries the retrieval profile. The
   # image has bash and nothing else, so the health check speaks HTTP through /dev/tcp, the way
   # the identity provider's does.
@@ -531,8 +531,8 @@ services:
     # No alias: vectors.aquaflux.internal belongs to the ingress (see `tools` above).
 
   # ------------------------------------------------------------- profile: telemetry
-  # The collector and the trace store d-04 reads (ADR-023). The collector's configuration is the
-  # learner's own file, labs/d-04/collector.yaml, baked into the image by `aqx collector apply`,
+  # The collector and the trace store reconstruct-one-transaction reads (ADR-023). The collector's configuration is the
+  # learner's own file, labs/reconstruct-one-transaction/collector.yaml, baked into the image by `aqx collector apply`,
   # the way `aqx policy apply` loads the learner's Rego: no bind mount, no live reload, and what
   # is in the file is what runs. The seeded fault is in that file: the receiver that reads the
   # gateway's decision file exists and is wired to no pipeline.
@@ -587,14 +587,14 @@ services:
       - traces
 
   # -------------------------------------------------------------- profile: workflow
-  # The durable execution engine e-03 runs its meter check in (ADR-025). The CLI image, in the
+  # The durable execution engine survive-the-crash runs its meter check in (ADR-025). The CLI image, in the
   # development mode the handout names: one process, the server and the web interface together,
   # state in memory. The engine is never restarted during the lab, only the worker is, so memory
   # is enough and a restart of the stack starts the lab fresh, which is what an instructor wants.
   #
   # The worker is not a container. It is a process in the dev container, started by
   # `labs/stack/start-worker.sh` from the tier directory the learner is editing, for the same
-  # reason c-02's MCP servers are: the learner edits activities.py and restarts the worker, and
+  # reason expose-one-operation's MCP servers are: the learner edits activities.py and restarts the worker, and
   # an image rebuild in that loop would be setup in the middle of the task. It reaches the engine
   # by service name, `workflow:7233`, plain gRPC that never leaves the network. The web interface
   # is the one public address, `https://workflow.aquaflux.internal:8233`, through the ingress.
@@ -630,9 +630,9 @@ volumes:
   tls:
   browser-profile:
   # The tool gateway's decision file: written by the gateway, read by the collector when its
-  # configuration says so, seeded with the history by telemetry-seed (d-04).
+  # configuration says so, seeded with the history by telemetry-seed (reconstruct-one-transaction).
   gateway-logs:
-  # The audit store the collector writes and the ingress serves read-only (d-04).
+  # The audit store the collector writes and the ingress serves read-only (reconstruct-one-transaction).
   audit:
 
 networks:

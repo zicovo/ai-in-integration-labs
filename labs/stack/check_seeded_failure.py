@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check that a-02's seeded failure still fails.
+"""Check that one-governed-call's seeded failure still fails.
 
-`.ai/PEDAGOGY.md` requires a deliberate failure in every lab, and in a-02 it is seeded state: a
+`.ai/PEDAGOGY.md` requires a deliberate failure in every lab, and in one-governed-call it is seeded state: a
 second virtual model name whose tool calls name connection 4417 instead of 4471. The learner's
 schema check passes that call and their content check catches it, which is the whole lesson.
 
@@ -10,7 +10,7 @@ is green, and nobody learns what the green meant. So it is checked by code, like
 that a model might quietly stop doing (AGENTS.md rule 11).
 
 Run it before every delivery, and after any change to the seeded instruction in
-labs/stack/model-seed/app.py or to a-02's tool description.
+labs/stack/model-seed/app.py or to one-governed-call's tool description.
 
 Exit code 0 when the failure still fires on `aquaflux-alt` and does not fire on
 `aquaflux-default`.
@@ -29,7 +29,7 @@ KEY = os.environ.get("LAB_GATEWAY_KEY", "sk-aquaflux-lab")
 HEADERS = {"Authorization": f"Bearer {KEY}"}
 RUNS = int(os.environ.get("AQUAFLUX_RUNS", "5"))
 
-# a-02's worked tier verbatim.
+# one-governed-call's worked tier verbatim.
 DESCRIPTION = (
     "Return the meter readings for one Aquaflux connection over a period. "
     "Use it whenever a question is about consumption or a bill. "
@@ -98,7 +98,7 @@ def main() -> int:
     if right != RUNS:
         failures.append(
             f"aquaflux-default named connection 4471 in only {right} of {RUNS} runs. "
-            "a-02's check set has to be green on every one of these."
+            "one-governed-call's check set has to be green on every one of these."
         )
 
     alt = connection_ids("aquaflux-alt", DESCRIPTION, RUNS)
@@ -107,7 +107,7 @@ def main() -> int:
     if transposed == 0:
         failures.append(
             "aquaflux-alt never transposed the connection. The seeded failure is not firing, so "
-            "a-02's content check has nothing to catch and the lab teaches nothing. Re-measure "
+            "one-governed-call's content check has nothing to catch and the lab teaches nothing. Re-measure "
             "the seeded instruction in labs/stack/model-seed/app.py."
         )
 

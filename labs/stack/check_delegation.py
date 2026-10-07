@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Check the delegation chain d-02 is built on, and which claim carries the actor.
+"""Check the delegation chain carry-the-authority is built on, and which claim carries the actor.
 
 `HANDOFF-LAB.md` puts this on the list to verify before every delivery, in these words: "That the
 identity provider still issues an `act` claim on a standard token exchange with an `actor_token`.
-d-02's handout says to check this per release; a change there breaks the lab's central teaching
+carry-the-authority's handout says to check this per release; a change there breaks the lab's central teaching
 artefact."
 
 It does not, as of Keycloak 26.7.4. See `OD-024`. This script is what found that and is what will
@@ -91,7 +91,7 @@ def main() -> int:
         f"scope={e.get('scope')!r}  azp={e.get('azp')}  act={e.get('act')}  life={lifetime}s"
     )
 
-    # d-02's acceptance check, line by line.
+    # carry-the-authority's acceptance check, line by line.
     if e.get("preferred_username") != "nadia":
         failures.append("the exchanged token's subject is not Nadia")
     if e.get("aud") != "wom-api":
@@ -109,14 +109,14 @@ def main() -> int:
             "  NOTE  There is no act claim. This identity provider records the actor of a\n"
             "        standard exchange in azp instead, which names "
             f"{e.get('azp')!r} above.\n"
-            "        d-02's acceptance check asks for act, so this is OD-024, open. The lab's\n"
+            "        carry-the-authority's acceptance check asks for act, so this is OD-024, open. The lab's\n"
             "        substance is unaffected: the token is still delegated, still narrowed to\n"
             "        one audience and one scope, and still attributable to both parties."
         )
 
     # The other half of the delegation lesson: the narrowing has to be real. The values below
     # are read from the agent's own deployed configuration rather than written here, because
-    # that file is where d-02's seeded fault lives and a copy of it here would drift.
+    # that file is where carry-the-authority's seeded fault lives and a copy of it here would drift.
     print()
     deployed = json.loads(
         (pathlib.Path(__file__).resolve().parent / "agent" / "reading-assistant.json").read_text()
@@ -137,11 +137,11 @@ def main() -> int:
     if w.get("aud") != "mdm-api":
         failures.append(
             "the agent's deployed configuration no longer produces a token for the meter data "
-            "system, so d-02's seeded fault has stopped being a fault"
+            "system, so carry-the-authority's seeded fault has stopped being a fault"
         )
     if "workorder:close" not in (w.get("scope") or ""):
         failures.append(
-            "the agent's deployed configuration no longer over-scopes, so d-02's second fault "
+            "the agent's deployed configuration no longer over-scopes, so carry-the-authority's second fault "
             "has gone"
         )
 

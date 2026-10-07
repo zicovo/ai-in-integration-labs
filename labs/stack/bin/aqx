@@ -2,7 +2,7 @@
 # aqx: the lab stack's small wrapper. On the path inside the dev container.
 #
 # It exists so that a handout can say one short thing rather than a Compose incantation, and so
-# that when a component underneath is swapped the handout does not change. f-01 names it once.
+# that when a component underneath is swapped the handout does not change. break-it-then-fix-it names it once.
 
 set -euo pipefail
 
@@ -33,9 +33,9 @@ case "$cmd" in
 
   The stack is not running yet. It comes up per lab, so you start only what you need:
 
-      labs/stack/smoke.sh a-02
+      labs/stack/smoke.sh one-governed-call
 
-  That starts the services module a-02 uses and checks that everything the handout
+  That starts the services that lab uses and checks that everything the handout
   promises is true. If it fails, that is the stack's problem, not yours: ask the
   instructor.
 
@@ -110,7 +110,7 @@ EOF
     ;;
 
   showcase)
-    # A real MCP gateway product beside the stack, for c-02's debrief (ADR-021). Opt in. It is
+    # A real MCP gateway product beside the stack, for expose-one-operation's debrief (ADR-021). Opt in. It is
     # not the door the labs run through, so nothing here is assessed and nothing here is state.
     "${COMPOSE[@]}" --profile showcase up -d --wait showcase
     SHOW=https://showcase.aquaflux.internal
@@ -143,7 +143,7 @@ EOF
 EOF
     if [ -n "$registered" ]; then
       cat <<EOF
-  The curated server from c-02 is registered behind it. Read the names it gave the tools,
+  The curated server from expose-one-operation is registered behind it. Read the names it gave the tools,
   next to the names you gave them:
 
 $registered
@@ -156,7 +156,7 @@ EOF
       cat <<'EOF'
   Nothing is registered behind it yet. Start the curated server and run this again:
 
-      labs/stack/register-tool-server.sh labs/c-02/curated 8850 --policy wo-tools-3
+      labs/stack/register-tool-server.sh labs/expose-one-operation/curated 8850 --policy wo-tools-3
       aqx showcase
 
 EOF
@@ -250,12 +250,12 @@ EOF
     ;;
 
   run)
-    # Run an agent against a case: f-01 names this. Only the collections agent exists so far.
+    # Run an agent against a case: break-it-then-fix-it names this. Only the collections agent exists so far.
     #
     #   aqx run collections-agent --case 4471 --config weak [--fixture note-variant-b] [--json]
     #
     # The configuration file is config/collections-agent.yaml where you stand, or the one in
-    # labs/f-01/ if there is none. The agent is labs/stack/agent/collections_agent.py; read it.
+    # labs/break-it-then-fix-it/ if there is none. The agent is labs/stack/agent/collections_agent.py; read it.
     agent="${1:-}"; shift || true
     case "$agent" in
       collections-agent) exec python3 "$STACK_DIR/agent/collections_agent.py" "$@" ;;
@@ -278,7 +278,7 @@ EOF
     ;;
 
   fixture)
-    # Which note case 4471 carries. f-01's second note is sealed until the prompt fix is in, and
+    # Which note case 4471 carries. break-it-then-fix-it's second note is sealed until the prompt fix is in, and
     # the learner's own wording is loaded once with its text and reloaded by name afterwards.
     #
     #   aqx fixture load note-variant-b --case 4471
@@ -311,7 +311,7 @@ EOF
 
   collector)
     # The collector's configuration is the learner's file, baked into the image (ADR-019: no bind
-    # mounts) and restarted. Seconds, not minutes. d-04 names this.
+    # mounts) and restarted. Seconds, not minutes. reconstruct-one-transaction names this.
     #
     #   aqx collector apply collector.yaml
     sub="${1:-}"; shift || true
@@ -321,7 +321,7 @@ EOF
         [ -f "$file" ] || { echo "aqx collector apply: no file at $file" >&2; exit 2; }
         # The build context is labs/stack/collector/, a staging copy: the file given is copied
         # there, never the other way round, so applying tiers/worked/collector.yaml does not
-        # overwrite the learner's labs/d-04/collector.yaml.
+        # overwrite the learner's labs/reconstruct-one-transaction/collector.yaml.
         target="$STACK_DIR/collector/collector.yaml"
         mkdir -p "$STACK_DIR/collector"
         cp "$file" "$target"
@@ -340,9 +340,9 @@ EOF
     ;;
 
   telemetry)
-    # Put d-04's evidence back to the state its handout describes: an audit store holding the
+    # Put reconstruct-one-transaction's evidence back to the state its handout describes: an audit store holding the
     # history's spans and no decision records, a trace store holding the history, the gateway's
-    # decision file untouched. smoke.sh d-04 runs this, so a stack that has already been through
+    # decision file untouched. smoke.sh reconstruct-one-transaction runs this, so a stack that has already been through
     # the lab once (an instructor's, or verify.sh) starts the lab as a fresh one would.
     #
     #   aqx telemetry reset
@@ -360,7 +360,7 @@ EOF
         # The collector comes back with the learner's own configuration, not with whatever was
         # staged last: after a rehearsal that is the fixed one, and it would read the decision
         # file into the fresh audit store before anybody has found the gap.
-        mkdir -p "$STACK_DIR/collector" && cp "$STACK_DIR/../d-04/collector.yaml" "$STACK_DIR/collector/collector.yaml"
+        mkdir -p "$STACK_DIR/collector" && cp "$STACK_DIR/../reconstruct-one-transaction/collector.yaml" "$STACK_DIR/collector/collector.yaml"
         "${COMPOSE[@]}" build --quiet collector >/dev/null 2>&1 || "${COMPOSE[@]}" build collector
         "${COMPOSE[@]}" --profile telemetry up -d --no-deps traces collector telemetry-seed >/dev/null 2>&1
         for _ in $(seq 1 60); do
@@ -377,7 +377,7 @@ EOF
 
   trace)
     # The trace store's query API (Jaeger's /api/v3, OTLP JSON out), with the window a regulator
-    # needs and not the viewer's last hour. d-04 names this. The v2 store no longer serves the
+    # needs and not the viewer's last hour. reconstruct-one-transaction names this. The v2 store no longer serves the
     # old /api/traces search, and its attribute filter is a URL-encoded JSON map, which is why
     # this wrapper exists rather than a curl in the handout.
     #
@@ -416,7 +416,7 @@ EOF
 
   audit)
     # The audit store the collector writes: one JSON object per line, spans and decision records
-    # alike, in OTLP's JSON shape. Read through the ingress, filtered here. d-04 names this.
+    # alike, in OTLP's JSON shape. Read through the ingress, filtered here. reconstruct-one-transaction names this.
     #
     #   aqx audit --trace <trace-id>       everything on one trace: spans and the decision record
     #   aqx audit --last 5                 the last five records of any kind
@@ -482,14 +482,14 @@ usage: aqx <command>
   policy apply <p>   load a policy directory or file into the policy engine, and point the gateway at it
   policy mode <m>    log-only: log the engine's decisions and enforce none; enforce: back to enforcing
   policy show        what the gateway is deciding with
-  run <agent> ...    run an agent against a case (f-01: aqx run collections-agent --case 4471 --config weak)
+  run <agent> ...    run an agent against a case (break-it-then-fix-it: aqx run collections-agent --case 4471 --config weak)
   log [--last N]     the gateway's decision log
   fixture load|list  which note case 4471 carries
   approvals [clear]  what the approval service holds
-  trace <id>         one trace from the trace store; --tag key=value searches it (d-04)
+  trace <id>         one trace from the trace store; --tag key=value searches it (reconstruct-one-transaction)
   audit --trace <id> what the audit store holds for one trace; --last N for the newest records
-  collector apply <f>  run the collector from a configuration file (d-04)
-  telemetry reset    put d-04's evidence back the way the handout describes it
+  collector apply <f>  run the collector from a configuration file (reconstruct-one-transaction)
+  telemetry reset    put reconstruct-one-transaction's evidence back the way the handout describes it
 
 Profiles: core model identity tools policy telemetry retrieval workflow ui showcase
 EOF

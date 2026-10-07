@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Start the workflow worker from a tier directory, replacing the one that is running.
 #
-#   labs/stack/start-worker.sh [labs/e-03/broken]     the directory holding worker.py
+#   labs/stack/start-worker.sh [labs/survive-the-crash/broken]     the directory holding worker.py
 #   labs/stack/start-worker.sh                        the directory it was last started from
 #
-# e-03 calls this by name. The worker is a process in this dev container, not a container of its
-# own, for the same reason c-02's MCP servers are: the learner edits activities.py and restarts
+# survive-the-crash calls this by name. The worker is a process in this dev container, not a container of its
+# own, for the same reason expose-one-operation's MCP servers are: the learner edits activities.py and restarts
 # the worker, and an image rebuild in that loop would be setup in the middle of the task. It is
 # the process `labs/stack/kill-worker.sh` kills. Its output goes to labs/stack/.worker/worker.log.
 
@@ -21,7 +21,7 @@ bad() { printf '  \033[31mFAIL\033[0m  %s\n' "$*" >&2; }
 
 DIR="${1:-}"
 if [ -z "$DIR" ]; then
-  DIR="$(cat "$RUN_DIR/dir" 2>/dev/null || echo labs/e-03/broken)"
+  DIR="$(cat "$RUN_DIR/dir" 2>/dev/null || echo labs/survive-the-crash/broken)"
 fi
 DIR="$(cd "$REPO" 2>/dev/null && cd "$DIR" 2>/dev/null && pwd || (cd "$DIR" && pwd))"
 [ -f "$DIR/worker.py" ] || { bad "no worker.py in $DIR"; exit 1; }

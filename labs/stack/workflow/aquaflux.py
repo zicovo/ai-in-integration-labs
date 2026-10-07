@@ -1,10 +1,10 @@
 """What the meter check workflow needs from the rest of the stack. Plumbing, not the lesson.
 
-e-03 is about one function, `request_id_for`, and about what a durable engine does and does not
+survive-the-crash is about one function, `request_id_for`, and about what a durable engine does and does not
 guarantee. Everything the workflow's activities need from the stack around it lives here so that
-`labs/e-03/<tier>/activities.py` can be read in one sitting and edited in one place:
+`labs/survive-the-crash/<tier>/activities.py` can be read in one sitting and edited in one place:
 
-    token()             Nadia's authority, carried by the agent: the same exchange d-02 turns on,
+    token()             Nadia's authority, carried by the agent: the same exchange carry-the-authority turns on,
                         with the audience and scope the work order API publishes
     readings()          the meter data for one connection, from the meter data API
     propose()           one model call through the model gateway, strict JSON out, and the model
@@ -91,7 +91,7 @@ PROPOSAL_SCHEMA = {
 def token(scope: str = "workorder:create") -> str:
     """Nadia's authority, narrowed to one audience and the scopes named, held by the agent.
 
-    The same three calls as labs/stack/agent/ask.py, with the two lines d-02's seeded fault gets
+    The same three calls as labs/stack/agent/ask.py, with the two lines carry-the-authority's seeded fault gets
     wrong written correctly: the audience is the work order API and the scope is what the tool
     needs. The completion tier's compensation asks for `workorder:close` and nothing else.
     """
@@ -143,7 +143,7 @@ def work_orders(connection_id: str) -> list[dict]:
 def cancel_work_order(work_order_id: str, reason: str, bearer: str, decided_by: str = ACTS_FOR) -> dict:
     """The compensation: cancel one work order with a reason, straight against the API.
 
-    The curated catalogue publishes create and read and nothing else, on purpose (c-02). A
+    The curated catalogue publishes create and read and nothing else, on purpose (expose-one-operation). A
     compensation that cannot go through the tool it undoes is the usual shape, and where that
     call goes, with which credential, is a decision the completion tier asks the learner to make.
     """
@@ -255,8 +255,8 @@ def create_meter_check(connection_id: str, reason: str, request_id: str, note: s
 
     Returns what the run needs to say about the write: the work order id, whether the API created
     it (201) or answered with the original it had already created for that key (409), and the
-    gateway's call id. The span carries the key and the work order id from the start: e-03 runs
-    after d-04, where those two lines were the second fix.
+    gateway's call id. The span carries the key and the work order id from the start: survive-the-crash runs
+    after reconstruct-one-transaction, where those two lines were the second fix.
     """
     tracer = telemetry.setup("meter-check-worker")
     arguments = {"connection_id": connection_id, "reason": reason, "request_id": request_id,

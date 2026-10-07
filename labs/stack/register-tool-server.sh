@@ -3,7 +3,7 @@
 #
 #   labs/stack/register-tool-server.sh <directory> <port> [--policy <id>]
 #
-# c-02 calls this by name and never sees the registration call underneath, which is the point:
+# expose-one-operation calls this by name and never sees the registration call underneath, which is the point:
 # the gateway is a release candidate, its admin API moves between versions, and a handout that
 # spelled the call out would be wrong by the next delivery. What the handout promises is the
 # behaviour, and this file keeps that promise however the gateway changes.
@@ -12,12 +12,12 @@
 # start `server.py` from the directory, wait for it to answer, register it under the directory's
 # name, activate the policy if one was named, and print the catalogue.
 #
-# It **replaces** the catalogue rather than adding to it, and that is deliberate. c-02 runs the
+# It **replaces** the catalogue rather than adding to it, and that is deliberate. expose-one-operation runs the
 # generated catalogue and then the curated one, and the two runs are supposed to differ only in
 # what is published. Adding the second to the first leaves twenty-five tools behind the gateway
 # and the comparison the whole lab rests on quietly stops being a comparison. Pass `--add` if
 # you really do want to federate two servers at once, which is what a gateway is for and what
-# no tier of c-02 asks for.
+# no tier of expose-one-operation asks for.
 #
 # The server runs as a process in this dev container, not as a container of its own. That is
 # deliberate. The learner edits `server.py` and runs this again, and a rebuild between those two
@@ -37,8 +37,8 @@ usage() {
   cat >&2 <<'USAGE'
 usage: labs/stack/register-tool-server.sh <directory> <port> [--policy <id>]
 
-  directory   a directory holding server.py, for example labs/c-02/curated
-  port        the port to serve it on. c-02 uses 8850 for curated and 8851 for generated
+  directory   a directory holding server.py, for example labs/expose-one-operation/curated
+  port        the port to serve it on. expose-one-operation uses 8850 for curated and 8851 for generated
   --policy    the gateway policy to activate, for example wo-tools-1
 
   --add       keep whatever is already registered instead of replacing it
@@ -82,7 +82,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# The handout says `labs/c-02/generated`; a learner standing in that directory says `.`. Both
+# The handout says `labs/expose-one-operation/generated`; a learner standing in that directory says `.`. Both
 # work, and the name the gateway registers is the directory's own name either way.
 DIR="$(cd "$REPO" 2>/dev/null && cd "$DIR" 2>/dev/null && pwd || (cd "$DIR" && pwd))"
 NAME="$(basename "$DIR")"

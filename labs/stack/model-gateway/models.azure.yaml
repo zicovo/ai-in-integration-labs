@@ -1,5 +1,5 @@
 # The model list when Azure OpenAI is configured and answered. This is the default path of
-# dec:OD-025, chosen because c-02 asks a model to pick a generic tool and infer `disconnection`
+# dec:OD-025, chosen because expose-one-operation asks a model to pick a generic tool and infer `disconnection`
 # from a catalogue of twenty-three, which a small model on a laptop CPU may not do reliably.
 #
 # The deployment names are configuration and no handout names one. If a delivery uses different
@@ -16,7 +16,7 @@ model_list:
       api_version: os.environ/AZURE_API_VERSION
       timeout: 300
 
-  # a-02's configuration two, seeded the same way it is locally: through the model-seed service,
+  # one-governed-call's configuration two, seeded the same way it is locally: through the model-seed service,
   # because the learner's own system message would otherwise replace anything set here. The
   # seeding proxy speaks OpenAI's chat completions on this path and forwards to Azure itself, so
   # the gateway addresses it as an OpenAI-compatible provider rather than as Azure.

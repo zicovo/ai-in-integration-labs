@@ -4,7 +4,7 @@
 # This is the only command a handout tells a learner to run before the task starts. Setup is never
 # a lab objective (.ai/PEDAGOGY.md), so if this fails, that is the stack's problem and not theirs.
 #
-# Usage: labs/stack/smoke.sh <module-id>
+# Usage: labs/stack/smoke.sh <lab>, by name; the module id is accepted too
 #
 # The module-to-profile map is in labs/README.md and must agree with this file.
 
@@ -24,14 +24,14 @@ FAILED=0
 # Which profiles each module needs. Keep in step with labs/README.md.
 profiles_for() {
   case "$1" in
-    a-02) echo "core model" ;;
-    b-01|b-02) echo "model retrieval" ;;
-    c-02) echo "core model identity tools" ;;
-    d-02) echo "core identity tools" ;;
-    d-03) echo "core identity tools policy" ;;
-    d-04) echo "core model identity tools policy telemetry" ;;
-    e-03) echo "core model identity tools policy telemetry workflow" ;;
-    f-01) echo "core model identity tools policy" ;;
+    one-governed-call) echo "core model" ;;
+    index-the-manuals|ground-the-assistant) echo "model retrieval" ;;
+    expose-one-operation) echo "core model identity tools" ;;
+    carry-the-authority) echo "core identity tools" ;;
+    block-the-call) echo "core identity tools policy" ;;
+    reconstruct-one-transaction) echo "core model identity tools policy telemetry" ;;
+    survive-the-crash) echo "core model identity tools policy telemetry workflow" ;;
+    break-it-then-fix-it) echo "core model identity tools policy" ;;
     *) return 1 ;;
   esac
 }
@@ -42,15 +42,17 @@ BUILT_PROFILES="core model identity tools policy telemetry retrieval workflow"
 
 usage() {
   cat >&2 <<'USAGE'
-usage: labs/stack/smoke.sh <module-id>
+usage: labs/stack/smoke.sh <lab>
 
-  a-02  b-01  b-02  c-02  d-02  d-03  d-04  e-03  f-01
+  one-governed-call  index-the-manuals  ground-the-assistant  expose-one-operation  carry-the-authority  block-the-call  reconstruct-one-transaction  survive-the-crash  break-it-then-fix-it
 USAGE
   exit 2
 }
 
 [ $# -eq 1 ] || usage
-MODULE="$1"
+# shellcheck source=names.sh
+. "$STACK_DIR/names.sh"
+MODULE="$(lab_name "$1" 2>/dev/null)" || usage
 WANTED="$(profiles_for "$MODULE")" || usage
 
 # ---------------------------------------------------------------- bring the stack up
@@ -133,7 +135,7 @@ check_identity() {
   fi
 
   head_ "Delegation"
-  note "checking the exchange d-02 turns on, and which claim carries the actor"
+  note "checking the exchange carry-the-authority turns on, and which claim carries the actor"
   if python3 "$STACK_DIR/check_delegation.py"; then
     ok "Nadia's authority reaches the work order API through the agent"
   else
@@ -144,9 +146,9 @@ check_identity() {
 check_core() {
   head_ "Aquaflux systems of record"
 
-  # Put the seeded work orders back before anything is checked. c-02 and e-03 clear connection
-  # 4471 at the end of their own smoke test, and 88213 lives there, so without this a d-04
-  # session that follows a c-02 session starts with its worked tier missing.
+  # Put the seeded work orders back before anything is checked. expose-one-operation and survive-the-crash clear connection
+  # 4471 at the end of their own smoke test, and 88213 lives there, so without this a reconstruct-one-transaction
+  # session that follows a expose-one-operation session starts with its worked tier missing.
   curl -fsS -X POST https://wom.aquaflux.internal/v4/_reset >/dev/null 2>&1 || true
 
   if json https://mdm.aquaflux.internal/health >/dev/null; then
@@ -181,11 +183,11 @@ check_core() {
   if [ "$(( mar > jan * 3 / 2 ? 1 : 0 ))" = "1" ]; then
     ok "connection 4471 consumption rises in March ($jan to $mar cubic metres)"
   else
-    bad "connection 4471 does not rise in March ($jan to $mar), which a-02's worked example needs"
+    bad "connection 4471 does not rise in March ($jan to $mar), which one-governed-call's worked example needs"
   fi
 
   if json https://mdm.aquaflux.internal/readings?connection_id=4417 >/dev/null; then
-    ok "connection 4417 exists, so a-02's transposition has somewhere to land"
+    ok "connection 4417 exists, so one-governed-call's transposition has somewhere to land"
   else
     bad "connection 4417 is missing"
   fi
@@ -211,7 +213,7 @@ check_model() {
 
   # With no key in labs/stack/.env the gateway falls back to the model runtime in the container,
   # and on a machine that has never run the stack that runtime holds no model. Pull it once here,
-  # the way the embedding model is pulled for b-01, rather than let a-02 fail on a missing model.
+  # the way the embedding model is pulled for index-the-manuals, rather than let one-governed-call fail on a missing model.
   local provider local_model
   provider="$("${COMPOSE[@]}" exec -T models cat /tmp/aquaflux-provider 2>/dev/null)"
   local_model="$("${COMPOSE[@]}" exec -T models printenv AQUAFLUX_MODEL 2>/dev/null)"
@@ -229,11 +231,11 @@ check_model() {
   esac
 
   head_ "What the model can actually do"
-  note "checking tool calling and strict JSON output, which a-02 requires of whatever model is behind the gateway"
+  note "checking tool calling and strict JSON output, which one-governed-call requires of whatever model is behind the gateway"
   if python3 "$STACK_DIR/check_model.py"; then
     ok "tool calling and strict JSON output both work"
   else
-    bad "the model behind the gateway cannot do what a-02 needs (see above)"
+    bad "the model behind the gateway cannot do what one-governed-call needs (see above)"
   fi
 }
 
@@ -247,14 +249,14 @@ check_tools() {
   fi
   ok "tool gateway $(echo "$version" | jq -r .version) answers at tools.aquaflux.internal:4444"
 
-  # Which policy is loaded is setup, and setup is never the task. c-02 starts on the rule that
-  # can only name the generic operation; d-02 and e-03 start on the one that reads the token; the
+  # Which policy is loaded is setup, and setup is never the task. expose-one-operation starts on the rule that
+  # can only name the generic operation; carry-the-authority and survive-the-crash start on the one that reads the token; the
   # modules with a policy engine are switched onto it in check_policy, below.
   local policy="wo-tools-1"
   case "$MODULE" in
-    d-02) policy="wo-tools-4" ;;
-    e-03) policy="wo-tools-5" ;;
-    d-03|d-04|f-01) policy="" ;;
+    carry-the-authority) policy="wo-tools-4" ;;
+    survive-the-crash) policy="wo-tools-5" ;;
+    block-the-call|reconstruct-one-transaction|break-it-then-fix-it) policy="" ;;
   esac
   if [ -n "$policy" ]; then
     if curl -fsS -X PUT "https://tools.aquaflux.internal:4444/policy/$policy" >/dev/null; then
@@ -269,21 +271,21 @@ check_tools() {
   local servers
   servers="$(json https://tools.aquaflux.internal:4444/servers | jq 'length')"
   case "$MODULE" in
-    d-03|d-04|f-01) ;;  # check_policy replaces the catalogue with the collections tools
-    e-03) ;;            # check_workflow registers the curated server
-    d-02)
-      # d-02's step five calls create_meter_check_work_order by hand. The server behind it is a
-      # process in this container, and a container that has been restarted since c-02 has none,
+    block-the-call|reconstruct-one-transaction|break-it-then-fix-it) ;;  # check_policy replaces the catalogue with the collections tools
+    survive-the-crash) ;;            # check_workflow registers the curated server
+    carry-the-authority)
+      # carry-the-authority's step five calls create_meter_check_work_order by hand. The server behind it is a
+      # process in this container, and a container that has been restarted since expose-one-operation has none,
       # so register it here rather than leave the learner to find a 404 at the central moment.
       head_ "The tool behind the gateway"
-      if "$STACK_DIR/register-tool-server.sh" labs/c-02/curated 8850 --policy "$policy" >/dev/null 2>&1; then
+      if "$STACK_DIR/register-tool-server.sh" labs/expose-one-operation/curated 8850 --policy "$policy" >/dev/null 2>&1; then
         ok "create_meter_check_work_order is registered at the gateway, policy $policy"
       else
         bad "the curated work order server did not register"
       fi ;;
     *)
       if [ "$servers" = "0" ]; then
-        ok "the catalogue is empty, which is where c-02 starts"
+        ok "the catalogue is empty, which is where expose-one-operation starts"
       else
         note "$servers MCP server(s) are still registered from an earlier run"
         note "clear them with: labs/stack/register-tool-server.sh --stop"
@@ -315,19 +317,19 @@ check_policy() {
     && ok "no approvals are carried over from an earlier session" \
     || bad "could not clear the approvals"
 
-  if [ "$MODULE" = "d-04" ]; then
+  if [ "$MODULE" = "reconstruct-one-transaction" ]; then
     head_ "The reading assistant's catalogue"
-    # d-04 runs the reading assistant against c-02's curated server, behind the gateway, with
+    # reconstruct-one-transaction runs the reading assistant against expose-one-operation's curated server, behind the gateway, with
     # the policy engine deciding: the setup the handout describes. The server is a process in
-    # this container, like c-02's, started and registered here.
-    if "$STACK_DIR/register-tool-server.sh" labs/c-02/curated 8850 >/dev/null 2>&1; then
+    # this container, like expose-one-operation's, started and registered here.
+    if "$STACK_DIR/register-tool-server.sh" labs/expose-one-operation/curated 8850 >/dev/null 2>&1; then
       ok "the curated work order server is registered: create_meter_check_work_order and get_work_order_status"
     else
       bad "the curated work order server did not register"
     fi
   else
   head_ "The collections agent's catalogue"
-  # Replace whatever is behind the gateway with the collections tools. c-02's servers are
+  # Replace whatever is behind the gateway with the collections tools. expose-one-operation's servers are
   # processes in this container and are stopped; the collections tools are a container in the
   # policy profile and are registered by service name.
   "$STACK_DIR/register-tool-server.sh" --stop >/dev/null 2>&1 || true
@@ -350,11 +352,11 @@ check_policy() {
 
   head_ "The starting policy"
   # The module's own policy directory, loaded as it stands. Never overwritten: if a learner has
-  # edited it, what they edited is what is enforced, which is the point. d-04 has no policy of
-  # its own: it runs the reading assistant against d-03's rule and register, which already
+  # edited it, what they edited is what is enforced, which is the point. reconstruct-one-transaction has no policy of
+  # its own: it runs the reading assistant against block-the-call's rule and register, which already
   # names the reading assistant and its two curated tools.
   local dir="$REPO_DIR/labs/$MODULE/policy"
-  case "$MODULE" in d-04) dir="$REPO_DIR/labs/d-03/policy" ;; esac
+  case "$MODULE" in reconstruct-one-transaction) dir="$REPO_DIR/labs/block-the-call/policy" ;; esac
   if [ -d "$dir" ]; then
     if out="$("$STACK_DIR/bin/aqx" policy apply "$dir" 2>&1)"; then
       ok "$(echo "$out" | tail -1 | sed 's/^ *//')"
@@ -377,10 +379,10 @@ check_policy() {
   if [ "$(json https://cis.aquaflux.internal/dunning/4471 | jq -r '.notes | length')" = "1" ]; then
     ok "case 4471 is overdue with one customer note attached"
   else
-    bad "case 4471 has no note, which f-01 depends on"
+    bad "case 4471 has no note, which break-it-then-fix-it depends on"
   fi
   if [ "$(curl -s -o /dev/null -w '%{http_code}' https://cis.aquaflux.internal/dunning/4472)" = "404" ]; then
-    ok "connection 4472 is not in arrears, so d-03's reuse test has somewhere to fail"
+    ok "connection 4472 is not in arrears, so block-the-call's reuse test has somewhere to fail"
   else
     bad "connection 4472 has a dunning case and should not"
   fi
@@ -389,7 +391,7 @@ check_policy() {
 check_wom_module() {
   head_ "Work orders"
   if json https://wom.aquaflux.internal/v4/work-orders/88213 >/dev/null; then
-    ok "work order 88213 exists for d-04's worked tier"
+    ok "work order 88213 exists for reconstruct-one-transaction's worked tier"
   else
     bad "work order 88213 is missing"
   fi
@@ -440,37 +442,37 @@ check_retrieval() {
 
   head_ "The corpus"
   local docs
-  docs="$(ls "$REPO_DIR"/labs/corpus/b-01/documents/*.md 2>/dev/null | wc -l | tr -d ' ')"
+  docs="$(ls "$REPO_DIR"/labs/corpus/index-the-manuals/documents/*.md 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$docs" = "20" ]; then
-    ok "twenty documents under labs/corpus/b-01/documents, with two scanned pages and one superseded page beside them"
+    ok "twenty documents under labs/corpus/index-the-manuals/documents, with two scanned pages and one superseded page beside them"
   else
-    bad "labs/corpus/b-01/documents holds $docs documents, expected twenty"
+    bad "labs/corpus/index-the-manuals/documents holds $docs documents, expected twenty"
   fi
-  if [ "$MODULE" = "b-01" ]; then
-    # b-01's worked tier creates the table itself. One left over from an earlier session makes
+  if [ "$MODULE" = "index-the-manuals" ]; then
+    # index-the-manuals's worked tier creates the table itself. One left over from an earlier session makes
     # step one fail on "already exists" and would let step two add a second copy of every chunk;
     # say so here, with the one line that clears it, rather than let the learner meet both.
     local rows
     rows="$(psql "${AQUAFLUX_DB:-postgres://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux}" -tAc "select count(*) from chunks" 2>/dev/null | tr -d ' ')"
     if [ -n "$rows" ]; then
-      note "a chunks table is already there with $rows rows, from an earlier run of this lab or of b-02"
+      note "a chunks table is already there with $rows rows, from an earlier run of this lab or of ground-the-assistant"
       note "to start the worked tier from nothing:  psql \"\$AQUAFLUX_DB\" -c 'drop table chunks'"
     else
       ok "no chunks table yet: step one of the worked tier creates it"
     fi
   fi
-  if [ "$MODULE" = "b-02" ]; then
-    # b-02 continues from b-01's index. If it is not there, load the reference one.
+  if [ "$MODULE" = "ground-the-assistant" ]; then
+    # ground-the-assistant continues from index-the-manuals's index. If it is not there, load the reference one.
     local rows
     rows="$(psql "${AQUAFLUX_DB:-postgres://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux}" -tAc "select count(*) from chunks" 2>/dev/null | tr -d ' ')"
     if [ -n "$rows" ] && [ "$rows" -gt 0 ] 2>/dev/null; then
-      ok "the chunks table from b-01 is there with $rows rows"
+      ok "the chunks table from index-the-manuals is there with $rows rows"
     else
-      note "no chunks table from b-01; loading the reference index (about a minute)"
-      if (cd "$REPO_DIR/labs/b-01" && python3 index.py --replace >/dev/null 2>&1); then
+      note "no chunks table from index-the-manuals; loading the reference index (about a minute)"
+      if (cd "$REPO_DIR/labs/index-the-manuals" && python3 index.py --replace >/dev/null 2>&1); then
         ok "the reference index is loaded: $(psql "${AQUAFLUX_DB:-postgres://aquaflux:aquaflux@db.aquaflux.internal:5432/aquaflux}" -tAc 'select count(*) from chunks' | tr -d ' ') rows"
       else
-        bad "the reference index would not load; run labs/b-01/index.py by hand and read the error"
+        bad "the reference index would not load; run labs/index-the-manuals/index.py by hand and read the error"
       fi
     fi
   fi
@@ -478,7 +480,7 @@ check_retrieval() {
 
 check_telemetry() {
   head_ "Telemetry"
-  # The audit store is append-only, so a stack that has been through d-04 once holds the fixed
+  # The audit store is append-only, so a stack that has been through reconstruct-one-transaction once holds the fixed
   # state in it. Empty it and let the seed put the history back, so the lab starts as the
   # handout describes it whoever ran it last.
   if "$STACK_DIR/bin/aqx" telemetry reset >/dev/null 2>&1; then
@@ -486,12 +488,12 @@ check_telemetry() {
   else
     bad "aqx telemetry reset failed (docker compose logs telemetry-seed)"
   fi
-  # The collector runs whatever labs/d-04/collector.yaml says, as the policy engine runs the
+  # The collector runs whatever labs/reconstruct-one-transaction/collector.yaml says, as the policy engine runs the
   # learner's policy/. Applying it is setup; what is in the file is never overwritten.
-  if out="$("$STACK_DIR/bin/aqx" collector apply "$REPO_DIR/labs/d-04/collector.yaml" 2>&1)"; then
+  if out="$("$STACK_DIR/bin/aqx" collector apply "$REPO_DIR/labs/reconstruct-one-transaction/collector.yaml" 2>&1)"; then
     ok "$(echo "$out" | tail -1 | sed 's/^ *//')"
   else
-    bad "the collector would not start from labs/d-04/collector.yaml:"; echo "$out" | sed 's/^/        /'
+    bad "the collector would not start from labs/reconstruct-one-transaction/collector.yaml:"; echo "$out" | sed 's/^/        /'
   fi
   if [ "$(curl -s --max-time 10 https://collector.aquaflux.internal:13133/healthz | jq -r '.status // empty' 2>/dev/null)" = "Server available" ] \
      || curl -fsS --max-time 10 https://collector.aquaflux.internal:13133/healthz >/dev/null 2>&1; then
@@ -545,9 +547,9 @@ check_workflow() {
   fi
 
   head_ "The tool behind the gateway"
-  # e-03 runs the meter check through c-02's curated tool, behind the gateway under the policy
-  # that reads the token. The server is a process in this container, like c-02's own.
-  if "$STACK_DIR/register-tool-server.sh" labs/c-02/curated 8850 --policy wo-tools-5 >/dev/null 2>&1; then
+  # survive-the-crash runs the meter check through expose-one-operation's curated tool, behind the gateway under the policy
+  # that reads the token. The server is a process in this container, like expose-one-operation's own.
+  if "$STACK_DIR/register-tool-server.sh" labs/expose-one-operation/curated 8850 --policy wo-tools-5 >/dev/null 2>&1; then
     ok "create_meter_check_work_order is registered at the gateway, policy wo-tools-5"
   else
     bad "the curated work order server did not register"
@@ -564,10 +566,10 @@ check_workflow() {
      && kill -0 "$(cat "$STACK_DIR/.worker/pid")" 2>/dev/null; then
     local running; running="$(cat "$STACK_DIR/.worker/dir" 2>/dev/null)"
     ok "a worker is already polling aquaflux-meter-check, running $running"
-    if [ "$running" != "labs/e-03/broken" ]; then
-      note "the handout starts on broken/. For a fresh start: labs/stack/start-worker.sh labs/e-03/broken"
+    if [ "$running" != "labs/survive-the-crash/broken" ]; then
+      note "the handout starts on broken/. For a fresh start: labs/stack/start-worker.sh labs/survive-the-crash/broken"
     fi
-  elif out="$("$STACK_DIR/start-worker.sh" labs/e-03/broken 2>&1)"; then
+  elif out="$("$STACK_DIR/start-worker.sh" labs/survive-the-crash/broken 2>&1)"; then
     ok "$(echo "$out" | tail -1 | sed 's/\x1b\[[0-9;]*m//g; s/^ *ok *//')"
   else
     bad "the worker did not start:"; echo "$out" | sed 's/^/        /'
@@ -575,10 +577,10 @@ check_workflow() {
 
   head_ "Telemetry"
   # The acceptance check asks for the correlation id in the trace, so the collector and the trace
-  # store are up for e-03 too. Nothing of d-04's state is reset here: this only makes sure the
-  # collector has a configuration to run with, the learner's own if d-04 has been done.
+  # store are up for survive-the-crash too. Nothing of reconstruct-one-transaction's state is reset here: this only makes sure the
+  # collector has a configuration to run with, the learner's own if reconstruct-one-transaction has been done.
   if [ ! -f "$STACK_DIR/collector/collector.yaml" ]; then
-    "$STACK_DIR/bin/aqx" collector apply "$REPO_DIR/labs/d-04/collector.yaml" >/dev/null 2>&1 || true
+    "$STACK_DIR/bin/aqx" collector apply "$REPO_DIR/labs/reconstruct-one-transaction/collector.yaml" >/dev/null 2>&1 || true
   fi
   if curl -fsS --max-time 10 https://collector.aquaflux.internal:13133/healthz >/dev/null 2>&1; then
     ok "the collector answers, so the run's spans reach the trace store at traces.aquaflux.internal:16686"
@@ -590,25 +592,25 @@ check_workflow() {
 trust_lab_certificate_authority
 
 case "$MODULE" in
-  a-02) check_core; check_model ;;
-  c-02) check_core; check_model; check_identity; check_wom_module; check_tools ;;
-  e-03) check_core; check_model; check_identity; check_tools; check_workflow ;;
-  f-01) check_core; check_model; check_identity; check_wom_module; check_tools; check_policy ;;
-  d-02) check_core; check_identity; check_wom_module; check_tools ;;
-  d-03) check_core; check_identity; check_wom_module; check_tools; check_policy ;;
-  d-04) check_core; check_model; check_identity; check_wom_module; check_tools; check_policy; check_telemetry ;;
-  b-01|b-02) check_model; check_retrieval ;;
+  one-governed-call) check_core; check_model ;;
+  expose-one-operation) check_core; check_model; check_identity; check_wom_module; check_tools ;;
+  survive-the-crash) check_core; check_model; check_identity; check_tools; check_workflow ;;
+  break-it-then-fix-it) check_core; check_model; check_identity; check_wom_module; check_tools; check_policy ;;
+  carry-the-authority) check_core; check_identity; check_wom_module; check_tools ;;
+  block-the-call) check_core; check_identity; check_wom_module; check_tools; check_policy ;;
+  reconstruct-one-transaction) check_core; check_model; check_identity; check_wom_module; check_tools; check_policy; check_telemetry ;;
+  index-the-manuals|ground-the-assistant) check_model; check_retrieval ;;
 esac
 
-# c-02 and e-03 both start from a clean connection 4471.
+# expose-one-operation and survive-the-crash both start from a clean connection 4471.
 #
-# c-02 needs it because work order 88213 is seeded on that connection for d-04, and an agent
+# expose-one-operation needs it because work order 88213 is seeded on that connection for reconstruct-one-transaction, and an agent
 # asked to check the meter finds it, says a meter check has already been proposed, and stops.
-# Measured, five runs out of five: the lab never reaches its own deliberate failure. e-03 needs
+# Measured, five runs out of five: the lab never reaches its own deliberate failure. survive-the-crash needs
 # it because it runs the failure more than once.
-# d-03 and f-01 create disconnection work orders on 4471 as they run, and the second run of the
+# block-the-call and break-it-then-fix-it create disconnection work orders on 4471 as they run, and the second run of the
 # attack should look like the first.
-if [ "$MODULE" = "e-03" ] || [ "$MODULE" = "c-02" ] || [ "$MODULE" = "d-03" ] || [ "$MODULE" = "f-01" ]; then
+if [ "$MODULE" = "survive-the-crash" ] || [ "$MODULE" = "expose-one-operation" ] || [ "$MODULE" = "block-the-call" ] || [ "$MODULE" = "break-it-then-fix-it" ]; then
   head_ "Reset"
   curl -fsS -X DELETE 'https://wom.aquaflux.internal/v4/work-orders?connection_id=4471' >/dev/null \
     && ok "work orders for connection 4471 cleared" \

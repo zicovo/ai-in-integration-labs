@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "The register as break-it-then-fix-it starts: the collections agent's allowed tools include the executing",
+    "one. That is the second half of the deliberate failure, next to the catalogue in",
+    "config/collections-agent.yaml. `aqx policy apply` loads each top-level key into the engine."
+  ],
+  "register": {
+    "collections-agent": {
+      "owner": "collections",
+      "task_class": 4,
+      "tier": "act",
+      "acts_for": ["els", "sam"],
+      "allowed_tools": [
+        "read_dunning_state",
+        "read_payments",
+        "send_reminder",
+        "propose_disconnection",
+        "create_disconnection_work_order"
+      ]
+    }
+  },
+  "tools": {
+    "read_dunning_state": {"read_only": true, "creates_work_order": false},
+    "read_payments": {"read_only": true, "creates_work_order": false},
+    "send_reminder": {"read_only": false, "creates_work_order": false},
+    "propose_disconnection": {"read_only": false, "creates_work_order": false},
+    "create_disconnection_work_order": {"read_only": false, "creates_work_order": true, "work_order_type": "disconnection"},
+    "create_work_order": {"read_only": false, "creates_work_order": true}
+  }
+}

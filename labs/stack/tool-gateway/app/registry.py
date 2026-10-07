@@ -2,7 +2,7 @@
 
 A server is registered by address. The gateway connects to it as an MCP client, asks it for its
 tools, and keeps the answer. That is the whole of federation, and it is why the tool descriptions
-a learner writes in c-02 arrive at the model unchanged: the gateway transcribes, it does not
+a learner writes in expose-one-operation arrive at the model unchanged: the gateway transcribes, it does not
 author. A gateway that rewrote descriptions would be quietly editing the thing the lab is about.
 
 Tool names are kept exactly as the server publishes them. That is not free: a gateway that

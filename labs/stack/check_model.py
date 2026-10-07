@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Check that the model behind the gateway can do what the labs require of it.
 
-a-02's handout says this is checked by the smoke test "because [these capabilities] depend on the
+one-governed-call's handout says this is checked by the smoke test "because [these capabilities] depend on the
 model the stack was built with", and HANDOFF-LAB.md puts it on the list to verify before every
 delivery. It is checked here, by code, rather than trusted, because the model is the most
 swappable thing in the stack and the least likely to announce that it has changed.
 
 Two capabilities, and the labs fail differently without each:
 
-    tool calling     a-02, c-02, e-03 and f-01 all turn on a model proposing a tool call. Without
+    tool calling     one-governed-call, expose-one-operation, survive-the-crash and break-it-then-fix-it all turn on a model proposing a tool call. Without
                      it there is no lab, only a chat window.
-    strict JSON      a-02's output schema and b-02's judged scoring parse the reply. Without it
+    strict JSON      one-governed-call's output schema and ground-the-assistant's judged scoring parse the reply. Without it
                      the learner debugs a parser instead of learning where the boundary is.
 
 Exit code 0 when both work.
@@ -85,7 +85,7 @@ def check_tool_calling() -> bool:
                 {"role": "system", "content": "Use the tool for readings. Never guess a value."},
                 {
                     "role": "user",
-                    # a-02's question verbatim, billing period included. Without the period the
+                    # one-governed-call's question verbatim, billing period included. Without the period the
                     # tool's required `from` and `to` have no answer, the instructions forbid
                     # guessing, and every model measured resolved that contradiction by inventing
                     # arguments rather than by asking. Keep this in step with the handout.
@@ -158,7 +158,7 @@ def main() -> int:
     if tools_ok and json_ok:
         return 0
     print(
-        "      The model behind the gateway cannot do what a-02 needs. Swap the model in\n"
+        "      The model behind the gateway cannot do what one-governed-call needs. Swap the model in\n"
         "      labs/stack/docker-compose.yml (AQUAFLUX_MODEL) and re-run, or ship the recorded\n"
         "      run sets instead, as the handout's instructor note allows.",
         file=sys.stderr,

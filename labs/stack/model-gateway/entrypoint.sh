@@ -2,7 +2,7 @@
 # Choose a model provider, then start the gateway.
 #
 # dec:OD-025 made a hosted model the default and kept the local runtime as a fallback, because
-# c-02 asks a model to choose a generic tool and infer `disconnection` from a catalogue of
+# expose-one-operation asks a model to choose a generic tool and infer `disconnection` from a catalogue of
 # twenty-three, and a small model on a laptop CPU may not do that reliably. The order is:
 #
 #   1. Azure OpenAI, if a key and an endpoint are configured and the endpoint answers.
@@ -115,7 +115,7 @@ else
 fi
 
 # Embeddings are chosen separately from the chat model, because a hosted resource often has a
-# chat deployment and no embedding one, and b-01 needs vectors either way. The hosted embedding
+# chat deployment and no embedding one, and index-the-manuals needs vectors either way. The hosted embedding
 # is used only if one real request for it succeeds; otherwise the local runtime embeds, on the
 # learner's machine if a runtime answers there and in the container if not. Said out loud, and
 # written to /tmp/aquaflux-embedding, because the smoke test prints the model name and the vector

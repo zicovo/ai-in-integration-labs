@@ -4,7 +4,7 @@
 #   labs/stack/run-workflow.sh --connection 4471
 #   labs/stack/run-workflow.sh --follow <workflow-id>
 #
-# e-03 calls this by name. What it prints is read from the engine, not from the worker, so it
+# survive-the-crash calls this by name. What it prints is read from the engine, not from the worker, so it
 # keeps narrating after the worker is killed. labs/stack/workflow/run.py is the script; read it.
 
 set -euo pipefail

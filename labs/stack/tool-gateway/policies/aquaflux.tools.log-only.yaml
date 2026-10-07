@@ -6,7 +6,7 @@
 # and a deny stops nothing.
 #
 # This is the shadow run a team does before switching a policy on: a week of "what would it have
-# refused" against real traffic, read from the log, before anything is refused. d-03's instructor
+# refused" against real traffic, read from the log, before anything is refused. block-the-call's instructor
 # note asked for it; no handout uses it yet. Switch with `aqx policy mode log-only` and back with
 # `aqx policy mode enforce`. Identity is checked the same way in both, and a tool nobody
 # publishes is refused in both, because neither is the policy's decision.

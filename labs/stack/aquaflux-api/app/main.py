@@ -7,7 +7,7 @@ One image, three containers. `AQUAFLUX_SYSTEM` selects which system of record th
     wom   work order management        wom.aquaflux.internal
 
 They are stand-ins, not simulations. Each exposes exactly what the handouts that name it need, and
-two of their design decisions are deliberate and are defended in c-02's debrief: `type` is an enum
+two of their design decisions are deliberate and are defended in expose-one-operation's debrief: `type` is an enum
 at the API level, so the API cannot reject the wrong work order type on an agent's behalf, and
 `Idempotency-Key` is a required header rather than an optional one, so a tool that omits it fails
 loudly instead of quietly creating duplicates.
@@ -50,7 +50,7 @@ def operation_id(route: APIRoute) -> str:
     """camelCase operation ids, derived from the handler name.
 
     FastAPI's default is `create_work_order_v4_work_orders_post`, which is unique and unreadable.
-    A generator pointed at this document turns the operation id into a tool name, so c-02's
+    A generator pointed at this document turns the operation id into a tool name, so expose-one-operation's
     catalogue would carry twenty-three of those. The names in the handout are `createWorkOrder`
     and `getWorkOrder`, which is what a hand-written API description looks like, so the stand-in
     produces those instead.
@@ -82,7 +82,7 @@ def docs() -> object:
 
 CONNECTIONS = set(seed.connection_ids())
 
-# The read-only page at `/` (app/views.py). Out of the schema, because c-02's generated catalogue
+# The read-only page at `/` (app/views.py). Out of the schema, because expose-one-operation's generated catalogue
 # is every operation in the schema and a page is not a tool.
 # A refresh outside two to sixty seconds is clamped rather than refused: a 422 in JSON is a poor
 # answer to a URL typed into the lab browser.
@@ -113,7 +113,7 @@ if SYSTEM == "mdm":
 
         `from` and `to` are ISO dates. A reading is returned when its period overlaps them. Both
         are optional here so that a learner exploring the API by hand is not blocked by them; the
-        tool definition in a-02 requires them, which is the point of that lab.
+        tool definition in one-governed-call requires them, which is the point of that lab.
         """
         if connection_id not in CONNECTIONS:
             raise HTTPException(404, f"No such connection: {connection_id}")
@@ -146,11 +146,11 @@ if SYSTEM == "cis":
         return record
 
     # Dunning cases are the one thing in this system that moves: the collections agent sends
-    # reminders and proposes disconnections against them, and f-01 swaps the note on case 4471.
+    # reminders and proposes disconnections against them, and break-it-then-fix-it swaps the note on case 4471.
     # State is in memory and re-seeded on restart or on `POST /dunning/_reset`, like work orders.
     _cases: dict[str, dict] = {}
     _fixture = ["note-variant-a"]
-    # A learner's own note, f-01 step four. Kept across `_reset` so `--fixture own` reloads it.
+    # A learner's own note, break-it-then-fix-it step four. Kept across `_reset` so `--fixture own` reloads it.
     _own_note: dict[str, str] = {}
 
     def _reset_cases() -> None:
@@ -206,7 +206,7 @@ if SYSTEM == "cis":
     def get_dunning_case(case_id: str) -> dict:
         """The dunning state for one connection, with any customer notes attached.
 
-        f-01 reads case 4471 and its note. The note is data. Whether anything downstream treats it
+        break-it-then-fix-it reads case 4471 and its note. The note is data. Whether anything downstream treats it
         as data is the question that lab exists to ask.
         """
         return _case(case_id)
@@ -254,7 +254,7 @@ if SYSTEM == "cis":
     def load_fixture(case_id: str, body: FixturePayload) -> dict:
         """Swap the note on a case.
 
-        f-01's second fixture arrives this way, through `aqx fixture`. So does the learner's own
+        break-it-then-fix-it's second fixture arrives this way, through `aqx fixture`. So does the learner's own
         note in step four: `{"note": "own", "text": "..."}` stores the wording and applies it, and
         `{"note": "own"}` afterwards reapplies the stored one, so `--fixture own` works on a run.
         """
@@ -300,7 +300,7 @@ if SYSTEM == "wom":
 
     @app.get("/.well-known/oauth-protected-resource", include_in_schema=False)
     def protected_resource_metadata() -> dict:
-        """RFC 9728. d-02's completion tier reads the audience and the scopes from here.
+        """RFC 9728. carry-the-authority's completion tier reads the audience and the scopes from here.
 
         The handout is explicit that the learner may not guess those two values, which is the
         point: a resource says what it is called and what may be asked of it, and a client reads
@@ -360,7 +360,7 @@ if SYSTEM == "wom":
         """Create a work order of any type.
 
         The API deliberately does not judge whether an agent should have chosen this type. That is
-        c-02's lesson: a disconnection requested for a billing query is accepted here, because the
+        expose-one-operation's lesson: a disconnection requested for a billing query is accepted here, because the
         enum says `disconnection` is a valid value and nothing at this layer knows who asked or
         why. The control belongs in the tool contract and in the policy, not here.
         """
@@ -368,8 +368,8 @@ if SYSTEM == "wom":
 
         # An opaque string, not a UUID. The document says `format: uuid`, because a UUID is what
         # a caller should use, and the API stores whatever it is given. Two labs depend on that
-        # lenience: c-02's generated catalogue drops the format along with every other
-        # constraint, and e-03's `broken/` derives its key from the clock, which is the fault
+        # lenience: expose-one-operation's generated catalogue drops the format along with every other
+        # constraint, and survive-the-crash's `broken/` derives its key from the clock, which is the fault
         # that lab exists to show. An API that rejected both would hide both.
         if not idempotency_key.strip() or len(idempotency_key) > 200:
             raise HTTPException(422, "Idempotency-Key must be a non-empty string of at most 200 characters")
@@ -405,7 +405,7 @@ if SYSTEM == "wom":
             "scheduled_for": None,
             "technician": None,
             # Who asked, and on whose authority. Null when no token was presented, which is how
-            # c-02 runs: that lab is about the tool contract and says nothing about identity.
+            # expose-one-operation runs: that lab is about the tool contract and says nothing about identity.
             "created_by": bearer.actor(claims),
         }
         _orders[work_order_id] = record
@@ -414,7 +414,7 @@ if SYSTEM == "wom":
 
     @app.delete("/v4/work-orders", include_in_schema=False)
     def clear_work_orders(connection_id: Annotated[str, Query()]) -> dict:
-        """Clear one connection's work orders. Used by `smoke.sh e-03` between attempts.
+        """Clear one connection's work orders. Used by `smoke.sh survive-the-crash` between attempts.
 
         Not part of the API the handouts teach, which is why it is out of the schema.
         """
@@ -431,7 +431,7 @@ if SYSTEM == "wom":
 
     # ---------------------------------------------------------- the rest of the API
     #
-    # Twenty-three operations in total. That number is not decoration: c-02's `generated/` server
+    # Twenty-three operations in total. That number is not decoration: expose-one-operation's `generated/` server
     # is produced by pointing a generator at this document, and the lab turns on the difference
     # between twenty-three tools and two. Its open tier asks the learner to name two of the
     # twenty-one they did not expose and the one they would refuse on principle, so the list has

@@ -1,6 +1,6 @@
 """`aquaflux-alt`: the same runtime, the same weights, one extra instruction.
 
-a-02 needs a second virtual model name that behaves slightly wrongly, so that a learner can watch
+one-governed-call needs a second virtual model name that behaves slightly wrongly, so that a learner can watch
 a deterministic check catch something a schema check passes. The handout says `aquaflux-alt`
 "points at the same runtime with a different system prompt seeded by the lab".
 
@@ -14,7 +14,7 @@ It speaks two dialects, because dec:OD-025 gave the stack two providers. On the 
 proxies Ollama's `/api/chat`. On the hosted path it proxies OpenAI-shaped
 `/v1/chat/completions` and forwards to Azure OpenAI itself, so the gateway addresses it as an
 ordinary OpenAI-compatible provider. Both dialects share `seed_messages`, so the seeded text
-cannot drift between them, which matters because a-02's measurement is a property of that text.
+cannot drift between them, which matters because one-governed-call's measurement is a property of that text.
 
 This service is never named to a learner. It is the lab's stagehand, and if it ever appears in a
 handout something has gone wrong.
@@ -31,7 +31,7 @@ UPSTREAM = os.environ.get("AQUAFLUX_UPSTREAM", "http://ollama.aquaflux.internal:
 
 # The hosted path. Empty when the stack is running locally, in which case /v1/chat/completions
 # refuses rather than guessing an upstream, because a silently wrong upstream here would look
-# like a-02's seeded failure not firing.
+# like one-governed-call's seeded failure not firing.
 AZURE_API_BASE = os.environ.get("AZURE_API_BASE", "").rstrip("/")
 # The classic dialect: deployment in the URL, `api-key` header, api-version. A classic Azure
 # OpenAI resource and Azure API Management both want it; entrypoint.sh keeps the same list, and

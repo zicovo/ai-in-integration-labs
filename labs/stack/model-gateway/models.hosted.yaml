@@ -18,7 +18,7 @@ model_list:
       api_key: os.environ/AZURE_API_KEY
       timeout: 300
 
-  # a-02's configuration two, seeded through the model-seed service, because the learner's own
+  # one-governed-call's configuration two, seeded through the model-seed service, because the learner's own
   # system message would replace anything set here. The proxy forwards to the same endpoint.
   - model_name: aquaflux-alt
     litellm_params:

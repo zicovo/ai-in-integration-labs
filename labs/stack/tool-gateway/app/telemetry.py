@@ -5,7 +5,7 @@ collector over OTLP/HTTP. The span says that a call went through this door and w
 named. It does not say what was decided: the decision, the rule and its version go to the
 gateway's own decision log, `GET /logs` and the file behind it, because a gateway wants its
 decisions durable even when the telemetry pipeline is down. Whether that file reaches the
-collector is d-04's question, and the answer is in the collector's configuration and not here.
+collector is reconstruct-one-transaction's question, and the answer is in the collector's configuration and not here.
 
 The exporter probes for the collector before every batch and drops the batch quietly when
 nothing is listening, so the `tools` profile runs unchanged without the `telemetry` one.

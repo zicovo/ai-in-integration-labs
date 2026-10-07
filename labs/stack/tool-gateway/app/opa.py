@@ -1,12 +1,12 @@
 """The second engine behind `policy.decide()`: Open Policy Agent, asked per call.
 
-d-03 moves the decision out of the gateway and into a policy engine the learner can test, diff
+block-the-call moves the decision out of the gateway and into a policy engine the learner can test, diff
 and deploy. The gateway's part is small and fixed, and it is written down here because three
 labs read what comes out of it:
 
     input     who is asking, on whose authority, what tool, with what arguments, and which
               approvals are currently active. Nothing about the model, nothing about the note
-              the model read. The policy cannot read the prompt, and that is the property f-01
+              the model read. The policy cannot read the prompt, and that is the property break-it-then-fix-it
               turns on
     query     `data.aquaflux.tools`, the learner's package. `decision` is the contract: an
               object with `effect` (allow, deny, hold) and `rule`. A package that only defines
@@ -18,7 +18,7 @@ labs read what comes out of it:
 
 When the engine cannot be reached, or holds no decision for the package, the call is denied and
 the reason says so. A gateway that allowed calls because its policy engine was down would be a
-gateway that fails open, and d-03's whole argument is against that.
+gateway that fails open, and block-the-call's whole argument is against that.
 """
 
 from __future__ import annotations

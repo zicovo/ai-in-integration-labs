@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Measure what the model does with c-02's two catalogues instead of assuming it.
+"""Measure what the model does with expose-one-operation's two catalogues instead of assuming it.
 
-c-02's handout (`dec:OD-026`) says that, given the generated twenty-three tool catalogue and a
+expose-one-operation's handout (`dec:OD-026`) says that, given the generated twenty-three tool catalogue and a
 request to check a meter, the model reaches the generic `create_work_order` and the log line
 reads `allow` under `wo-tools-1`; the learner then makes the disconnection call by hand through
 the same tool and compares. It also says the key the model invents is not a UUID and that a retry
@@ -11,7 +11,7 @@ the room runs the exercise, every check is green, and nobody learns what the gre
 
 So this runs the lab's own question against both catalogues, several times, and reports what the
 model actually did: which write tool it reached, which `type` it filled in, the shape of the key
-it sent, and how many work orders each run left on the connection. It is the c-02 counterpart of
+it sent, and how many work orders each run left on the connection. It is the expose-one-operation counterpart of
 `check_seeded_failure.py` and it is on the list to run before every delivery and after any model
 change.
 
@@ -42,25 +42,25 @@ STACK = pathlib.Path(__file__).resolve().parent
 QUESTION = "the customer on 4471 says their bill doubled, can someone check the meter"
 
 CATALOGUES = {
-    "generated": ("labs/c-02/generated", "8851", "wo-tools-1"),
-    "curated": ("labs/c-02/curated", "8850", "wo-tools-3"),
+    "generated": ("labs/expose-one-operation/generated", "8851", "wo-tools-1"),
+    "curated": ("labs/expose-one-operation/curated", "8850", "wo-tools-3"),
 }
 
-# c-02's worked tier step six: delete the sentence that says what the tool is not for, ask about
+# expose-one-operation's worked tier step six: delete the sentence that says what the tool is not for, ask about
 # a leak, and see what moves. The learner is asked to write two sentences on it, so it has to
 # actually move.
 NEGATIVE_SENTENCE = " Do not use it for leaks, outages or disconnections."
 LEAK = ("there is water coming up through the pavement outside number 14 "
         "on connection 4471")
-CURATED_SERVER = STACK.parent / "c-02" / "curated" / "server.py"
+CURATED_SERVER = STACK.parent / "expose-one-operation" / "curated" / "server.py"
 WOM = "https://wom.aquaflux.internal/v4/work-orders?connection_id=4471"
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 
 
 def reset() -> None:
-    """Clear connection 4471, the way `smoke.sh c-02` does before the lab starts.
+    """Clear connection 4471, the way `smoke.sh expose-one-operation` does before the lab starts.
 
-    Work order 88213 is seeded on that connection for d-04. Leave it there and the agent finds
+    Work order 88213 is seeded on that connection for reconstruct-one-transaction. Leave it there and the agent finds
     a meter check already proposed and stops, which is a true answer to the question and the
     end of the exercise.
     """
@@ -162,7 +162,7 @@ def step_six(runs: int) -> int:
             results[label] = booked
     finally:
         CURATED_SERVER.write_text(original)
-        subprocess.run([str(STACK / "register-tool-server.sh"), "labs/c-02/curated", "8850",
+        subprocess.run([str(STACK / "register-tool-server.sh"), "labs/expose-one-operation/curated", "8850",
                         "--policy", "wo-tools-3"], capture_output=True, text=True,
                        cwd=str(STACK.parent.parent))
 
@@ -183,7 +183,7 @@ def main() -> int:
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--only", choices=sorted(CATALOGUES))
     parser.add_argument("--step-six", action="store_true",
-                        help="measure c-02 worked tier step six instead")
+                        help="measure expose-one-operation worked tier step six instead")
     args = parser.parse_args()
 
     if args.step_six:
@@ -249,7 +249,7 @@ def main() -> int:
         print("  than meter_check. Show it in the room if it happens; the handout does not rely on it.")
     if reached == args.runs:
         print(f"  Every generated run reached create_work_order, which is the log line the handout")
-        print("  reads. c-02's worked tier step one holds on this model.")
+        print("  reads. expose-one-operation's worked tier step one holds on this model.")
         return 0
     print(f"  Only {reached} of {args.runs} generated runs reached create_work_order. The handout's")
     print("  step one says the log line will name that tool with decision allow; on this model it")

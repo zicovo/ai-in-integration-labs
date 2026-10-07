@@ -17,7 +17,7 @@ FROM jlesage/firefox:v26.08.3@sha256:193ef860a97b161f5f92dde0476550673e9905a6eaf
 # Firefox keeps its own certificate store and does not read the system one, so the lab's
 # certificate is installed through an enterprise policy instead. Without this the identity
 # provider greets every participant with a warning to click past, which is precisely the habit
-# d-02 exists to argue against.
+# carry-the-authority exists to argue against.
 COPY policies.json /usr/lib/firefox/distribution/policies.json
 # The toolbar is rebuilt from the policy at every start; the script says why.
 COPY --chmod=0755 57-aquaflux-bookmarks.sh /etc/cont-init.d/57-aquaflux-bookmarks.sh

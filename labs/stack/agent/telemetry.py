@@ -1,6 +1,6 @@
 """Telemetry for the lab agents: spans, one trace per run, exported to the collector when it is up.
 
-d-04 is the lab about this, and everything here is what that lab reads. The other labs run the
+reconstruct-one-transaction is the lab about this, and everything here is what that lab reads. The other labs run the
 same agents with the telemetry profile down, so the one rule this module keeps is that nothing
 here may make an agent slower or noisier when there is no collector: the exporter is installed
 only after a half-second probe finds one, and otherwise spans are created and dropped.
@@ -19,7 +19,7 @@ gated by an explicit user opt-in", and this flag is that opt-in.
 
 Attribute names: the `gen_ai.*` names follow the OpenTelemetry generative AI semantic conventions
 (Development status; they move), the `aquaflux.*` names are the audit schema in
-labs/d-04/audit-schema.md, which the collector normalises into and which does not move.
+labs/reconstruct-one-transaction/audit-schema.md, which the collector normalises into and which does not move.
 """
 
 from __future__ import annotations

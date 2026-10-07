@@ -10,7 +10,7 @@ model_list:
       api_base: AQUAFLUX_RUNTIME_BASE
       timeout: 300
 
-  # a-02's configuration two. The same runtime and the same weights, with an extra instruction
+  # one-governed-call's configuration two. The same runtime and the same weights, with an extra instruction
   # seeded in front of the learner's own. The seeding happens in the model-seed service, not here,
   # because a system prompt sent by the learner's script would otherwise replace it.
   - model_name: aquaflux-alt

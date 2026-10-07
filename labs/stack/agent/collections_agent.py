@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The Aquaflux collections agent: one dunning case, one named configuration.
 
-This is the agent f-01 runs, and it shares its plumbing with the reading assistant in `ask.py`:
+This is the agent break-it-then-fix-it runs, and it shares its plumbing with the reading assistant in `ask.py`:
 sign the person in, exchange for a token the agent holds while acting for them, hand the gateway's
 catalogue to the model unchanged, call what it chooses, print what it says. What is different is
 in the configuration file, and the configuration file is the lab:
@@ -12,7 +12,7 @@ in the configuration file, and the configuration file is the lab:
     instructions   the system prompt, which is where everybody puts the first fix
 
 `aqx run collections-agent --case 4471 --config weak` is how a handout says it. The configuration
-is read from config/collections-agent.yaml where you stand, or from labs/f-01/ if there is none,
+is read from config/collections-agent.yaml where you stand, or from labs/break-it-then-fix-it/ if there is none,
 so a learner editing their own copy runs their own copy.
 
 Nothing here reads the customer note. The model does, through `read_dunning_state`, and what it
@@ -43,11 +43,11 @@ CIS = os.environ.get("AQUAFLUX_CIS", "https://cis.aquaflux.internal")
 def find_config(explicit: str | None) -> pathlib.Path:
     for candidate in ([pathlib.Path(explicit)] if explicit else []) + [
         pathlib.Path("config/collections-agent.yaml"),
-        REPO / "labs" / "f-01" / "config" / "collections-agent.yaml",
+        REPO / "labs" / "break-it-then-fix-it" / "config" / "collections-agent.yaml",
     ]:
         if candidate.is_file():
             return candidate
-    raise SystemExit("no config/collections-agent.yaml here and none in labs/f-01/")
+    raise SystemExit("no config/collections-agent.yaml here and none in labs/break-it-then-fix-it/")
 
 
 def token(document: dict, config: dict) -> str:
@@ -94,7 +94,7 @@ def reset_case(case: str, fixture: str | None) -> str:
     """Put the case back the way the seed left it, carrying the note asked for.
 
     A dunning case moves when the agent acts on it: a reminder advances its state, a proposal
-    leaves it awaiting a team lead. f-01 runs the same case five or six times and reads what the
+    leaves it awaiting a team lead. break-it-then-fix-it runs the same case five or six times and reads what the
     note did each time, so every run starts from the seeded state, the way the measurements in
     `check_collections_agent.py` do. Without this, the third run finds a case that is already
     proposed and does nothing, whatever the note says, and step five has no refusal to show.
@@ -128,13 +128,13 @@ def main() -> int:
         print(f"\n  case {args.case} starts from its seeded state, carrying the note {fixture}")
 
     # The catalogue the gateway publishes, narrowed to what this configuration gives the agent.
-    # The narrowing is the agent's own configuration, not the gateway's, which is why f-01's
+    # The narrowing is the agent's own configuration, not the gateway's, which is why break-it-then-fix-it's
     # weak state is an over-broad list here and not a gateway setting.
     published = {tool["name"]: tool for tool in ask.catalogue()}
     missing = [name for name in config["tools"] if name not in published]
     if missing:
         raise SystemExit(f"the gateway does not publish {', '.join(missing)}; "
-                         "run labs/stack/smoke.sh f-01 to register the collections tools")
+                         "run labs/stack/smoke.sh break-it-then-fix-it to register the collections tools")
     tools = [published[name] for name in config["tools"]]
 
     bearer = token(document, config)

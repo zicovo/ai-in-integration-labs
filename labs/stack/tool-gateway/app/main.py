@@ -6,20 +6,20 @@ it decided (ADR-021).
 
 Four handouts grade on what this writes rather than on what it returns:
 
-    c-02  the log line names the agent, the person, the tool, the arguments, the decision,
+    expose-one-operation  the log line names the agent, the person, the tool, the arguments, the decision,
           the policy version and the work order id
-    d-02  two lines: the refusal of a wrongly addressed token with its reason, and the allowed
+    carry-the-authority  two lines: the refusal of a wrongly addressed token with its reason, and the allowed
           call with both identities
-    d-03  the same line with the decision coming from Open Policy Agent (app/opa.py) instead
+    block-the-call  the same line with the decision coming from Open Policy Agent (app/opa.py) instead
           of the rules in app/policy.py, and with the approval that released it, if one did
-    d-04  the same line, in the gateway's own decision file, joined to the run's trace by the
+    reconstruct-one-transaction  the same line, in the gateway's own decision file, joined to the run's trace by the
           trace id the caller sent
 
 So the log is the product here and the proxying is plumbing. `GET /logs` is the endpoint every
 handout reads, and its field names are fixed in labs/README.md. When AQUAFLUX_DECISION_LOG names
 a file, every line is appended there too, with the trace and span ids of the call, and when
 AQUAFLUX_OTLP names a collector, each call is one span (app/telemetry.py). The span never carries
-the decision. That split is d-04's seeded fault, and it is a realistic one: the decision is
+the decision. That split is reconstruct-one-transaction's seeded fault, and it is a realistic one: the decision is
 durable in the gateway's own file whatever the telemetry pipeline does, and it reaches the audit
 trail only if somebody wires the file into the collector.
 
@@ -67,7 +67,7 @@ def record(**fields: Any) -> dict:
     """Append one decision record and return it.
 
     Arguments are logged in full and hashed. In a real gateway the full arguments are often the
-    thing you must not keep, which is why the hash is there; here both are kept, because c-02
+    thing you must not keep, which is why the hash is there; here both are kept, because expose-one-operation
     asks a learner to read what the model actually sent and a hash of it teaches nothing.
     """
     arguments = fields.get("arguments") or {}
@@ -75,7 +75,7 @@ def record(**fields: Any) -> dict:
     line = {
         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "call_id": fields.get("call_id") or str(uuid.uuid4()),
-        # The run this call belongs to, from the caller's `traceparent`. This is the join d-04
+        # The run this call belongs to, from the caller's `traceparent`. This is the join reconstruct-one-transaction
         # depends on: the collector reads this file and puts the decision on the same trace.
         "trace_id": trace_id,
         "span_id": span_id,
@@ -95,7 +95,7 @@ def record(**fields: Any) -> dict:
         "rule": fields.get("rule"),
         # The approvals the policy was shown, and the one that released a hold if one did. An
         # allow that rests on an approval has to say which, or the log cannot answer "who said
-        # yes to this" (d-03's acceptance check).
+        # yes to this" (block-the-call's acceptance check).
         "approvals": fields.get("approvals") or [],
         "approval_id": fields.get("approval_id"),
         "work_order_id": fields.get("work_order_id"),
@@ -125,7 +125,7 @@ def work_order_id(result: Any) -> str | None:
     """Pull the work order id out of whatever the tool returned.
 
     A gateway cannot know what a tool returns, so this is a convention rather than a contract:
-    if the result carries a field called `work_order_id`, the log line carries it too. c-02's
+    if the result carries a field called `work_order_id`, the log line carries it too. expose-one-operation's
     acceptance check asks for it, because a decision record that cannot be joined to the thing
     that was decided is an audit trail with a hole in it.
     """
@@ -235,7 +235,7 @@ def list_policies() -> list[dict]:
 async def get_policy() -> dict:
     """The active policy, plus which of its rules name a tool nobody publishes.
 
-    That last list is not decoration. c-02's completion tier asks the learner to write a rule
+    That last list is not decoration. expose-one-operation's completion tier asks the learner to write a rule
     holding `create_disconnection_work_order` for an approver, and the point of the exercise is
     that the rule became *writable* the moment the catalogue was split, whether or not anybody
     has published that tool yet. The gateway says so rather than silently ignoring the rule.
@@ -471,7 +471,7 @@ def refusal(request_id: Any, line: dict, status: int) -> JSONResponse:
     """A refusal a learner can act on, in the protocol and in the HTTP status.
 
     The reason is in the body and, for anything to do with a token, in `WWW-Authenticate` as well.
-    d-02 turns on a participant reading that header rather than guessing, so it says which of the
+    carry-the-authority turns on a participant reading that header rather than guessing, so it says which of the
     two faults was caught and not just "unauthorized".
     """
     headers = {}

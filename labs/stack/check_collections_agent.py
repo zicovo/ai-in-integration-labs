@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Measure f-01's seeded failure instead of assuming it.
+"""Measure break-it-then-fix-it's seeded failure instead of assuming it.
 
-f-01's handout makes three claims about the collections agent that are properties of a model and
+break-it-then-fix-it's handout makes three claims about the collections agent that are properties of a model and
 not of the lab, so they are re-measured before every delivery and after any model change, the
-way `check_seeded_failure.py` does for a-02 and `check_tool_choice.py` for c-02. The claims are
+way `check_seeded_failure.py` does for one-governed-call and `check_tool_choice.py` for expose-one-operation. The claims are
 the ones `dec:OD-029` settled on, after the first measurement showed the original three did not
 hold:
 
@@ -20,7 +20,7 @@ happened".
     labs/stack/check_collections_agent.py             three runs of each
     labs/stack/check_collections_agent.py --runs 5
 
-Run it with the f-01 stack up (`labs/stack/smoke.sh f-01`). It prints a table and exits 0 if the
+Run it with the break-it-then-fix-it stack up (`labs/stack/smoke.sh break-it-then-fix-it`). It prints a table and exits 0 if the
 first claim held at least once and the two "holds" held in every run, which is what the handout's
 text depends on. Read the table; the exit code is for a smoke test. If the seeded note stops
 moving the model, the handout's fallback is the recorded run, never a rewritten note:
@@ -64,7 +64,7 @@ def run_once(config: str, fixture: str) -> dict:
     result = subprocess.run(
         [sys.executable, str(STACK / "agent" / "collections_agent.py"), "--case", "4471",
          "--config", config, "--fixture", fixture, "--json",
-         "--config-file", str(REPO / "labs" / "f-01" / "config" / "collections-agent.yaml")],
+         "--config-file", str(REPO / "labs" / "break-it-then-fix-it" / "config" / "collections-agent.yaml")],
         capture_output=True, text=True, timeout=600,
     )
     if result.returncode != 0:
@@ -114,7 +114,7 @@ def main() -> int:
     handout_claims = [held[(c, f)] for c, f, e, _claim in CLAIMS if e is not None]
     if all(handout_claims):
         print("\n  The handout's three claims held: the seeded note moves the weak agent, and the prompt")
-        print("  fix held against both fixtures. f-01's worked tier reads as written on this model.")
+        print("  fix held against both fixtures. break-it-then-fix-it's worked tier reads as written on this model.")
         return 0
     print("\n  A claim did not hold on this model. If the seeded note no longer moves the weak agent,")
     print("  do not rewrite it; ship the recorded run, or say so in the room. If the prompt fix failed")

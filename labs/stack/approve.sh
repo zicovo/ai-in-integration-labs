@@ -2,19 +2,19 @@
 # Record an approval, as a named person, at the approval service.
 #
 #   labs/stack/approve.sh --approver sam --connection 4471 [--action disconnection] [--note "..."]
-#   labs/stack/approve.sh --as sam                        e-03's spelling: approve the meter check
+#   labs/stack/approve.sh --as sam                        survive-the-crash's spelling: approve the meter check
 #                                                         the workflow is waiting for, on 4471
 #   labs/stack/approve.sh --revoke apr-xxxxxxxx           withdraw one (the completion tier's
 #                                                         "Sam then refuses")
 #   labs/stack/approve.sh --list                          the approvals currently active
 #   labs/stack/approve.sh --clear                         forget them all (instructor)
 #
-# `--as` is the e-03 handout's spelling, and it carries that lab's defaults: the action is
+# `--as` is the survive-the-crash handout's spelling, and it carries that lab's defaults: the action is
 # `meter_check` and the connection is 4471 unless --action or --connection say otherwise, because
-# the handout prints `approve.sh --as sam` and nothing more. `--approver` keeps d-03's default,
+# the handout prints `approve.sh --as sam` and nothing more. `--approver` keeps block-the-call's default,
 # `disconnection`, and insists on a connection.
 #
-# d-03 and e-03 call this by name. What it does, in order: sign the approver in at the identity
+# block-the-call and survive-the-crash call this by name. What it does, in order: sign the approver in at the identity
 # provider with their password, which is the step-up the study text asks for (an approval is a
 # decision taken now, not a session opened this morning); ask for a token addressed to the
 # approval service and nothing else; and post the approval with the action and the connection it
@@ -22,7 +22,7 @@
 # and a hash of exactly those arguments.
 #
 # It does not check that the approver may approve. Els can approve her own case here, and the
-# record will say so. Whether that counts is the policy's decision, which is the point of d-03's
+# record will say so. Whether that counts is the policy's decision, which is the point of block-the-call's
 # step five; a fixture that refused it would make that step impossible.
 
 set -euo pipefail

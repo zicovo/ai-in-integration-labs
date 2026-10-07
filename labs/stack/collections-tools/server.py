@@ -1,14 +1,14 @@
 """The collections agent's tools, published as one MCP server.
 
-This is the catalogue d-03 and f-01 put behind the tool gateway. It ships in the state both labs
+This is the catalogue block-the-call and break-it-then-fix-it put behind the tool gateway. It ships in the state both labs
 need it in, which is a deliberately mixed one:
 
     read_dunning_state, read_payments      reads
     send_reminder, propose_disconnection   the dunning steps the agent is meant to take
-    create_disconnection_work_order        the executing step, which f-01's weak agent should
-                                           not hold and d-03 gates behind an approval
+    create_disconnection_work_order        the executing step, which break-it-then-fix-it's weak agent should
+                                           not hold and block-the-call gates behind an approval
     create_work_order                      the generic tool with the type as an argument, which
-                                           is d-03's deliberate failure: a rule written on the
+                                           is block-the-call's deliberate failure: a rule written on the
                                            name above does not see this one
 
 Nothing here decides anything. The tools call the customer information system and the work order
