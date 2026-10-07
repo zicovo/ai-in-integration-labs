@@ -91,7 +91,8 @@ async def openai_chat(request: Request) -> Response:
     Two dialects, chosen by the endpoint, the same way entrypoint.sh chooses a model list. A
     classic Azure OpenAI resource puts the deployment in the URL, authenticates with `api-key`
     and needs an api-version. Azure AI Foundry's v1 endpoint, and most other providers, take
-    plain OpenAI: model in the body, bearer token, no api-version.
+    plain OpenAI: model in the body, bearer token, no api-version. Azure API Management takes
+    the classic dialect, because a subscription key goes in `api-key` and never in a bearer.
     """
     if not (AZURE_API_BASE and AZURE_API_KEY):
         return Response(
@@ -103,7 +104,7 @@ async def openai_chat(request: Request) -> Response:
     body = await request.json()
     if isinstance(body.get("messages"), list):
         body["messages"] = seed_messages(body["messages"])
-    if ".openai.azure.com" in AZURE_API_BASE:
+    if ".openai.azure.com" in AZURE_API_BASE or ".azure-api.net" in AZURE_API_BASE:
         deployment = body.pop("model", "")
         upstream = await client.post(
             f"{AZURE_API_BASE}/openai/deployments/{deployment}/chat/completions",

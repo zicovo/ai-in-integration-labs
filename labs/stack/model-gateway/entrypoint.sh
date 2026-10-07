@@ -61,10 +61,15 @@ if [ -n "${AZURE_API_KEY:-}" ] && [ -n "${AZURE_API_BASE:-}" ] && [ -n "$AZURE_D
     # and needs an api-version. Azure AI Foundry's v1 endpoint is plain OpenAI: model in the
     # body, bearer token, no api-version. Guessing wrong gives a 404 that reads like a missing
     # deployment rather than a wrong dialect, so the endpoint decides rather than the operator.
+    # Azure API Management at *.azure-api.net speaks the classic dialect too: a participant's
+    # subscription key travels in the same `api-key` header, and APIM refuses a bearer token.
     case "$AZURE_API_BASE" in
       *.openai.azure.com*)
         MODELS=/etc/litellm/models.azure.yaml
         DIALECT="Azure OpenAI" ;;
+      *.azure-api.net*)
+        MODELS=/etc/litellm/models.azure.yaml
+        DIALECT="Azure API Management" ;;
       *)
         MODELS=/etc/litellm/models.hosted.yaml
         DIALECT="an OpenAI-compatible endpoint" ;;
