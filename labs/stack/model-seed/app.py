@@ -33,6 +33,13 @@ UPSTREAM = os.environ.get("AQUAFLUX_UPSTREAM", "http://ollama.aquaflux.internal:
 # refuses rather than guessing an upstream, because a silently wrong upstream here would look
 # like a-02's seeded failure not firing.
 AZURE_API_BASE = os.environ.get("AZURE_API_BASE", "").rstrip("/")
+# The classic dialect: deployment in the URL, `api-key` header, api-version. A classic Azure
+# OpenAI resource and Azure API Management both want it; entrypoint.sh keeps the same list, and
+# verify.sh fails when the two disagree. The address may end in /openai, as the portal shows an
+# APIM API's address; the dialect appends that itself.
+CLASSIC_DIALECT = ".openai.azure.com" in AZURE_API_BASE or ".azure-api.net" in AZURE_API_BASE
+if CLASSIC_DIALECT and AZURE_API_BASE.endswith("/openai"):
+    AZURE_API_BASE = AZURE_API_BASE[: -len("/openai")]
 AZURE_API_KEY = os.environ.get("AZURE_API_KEY", "")
 AZURE_API_VERSION = os.environ.get("AZURE_API_VERSION", "2024-10-21")
 
@@ -104,7 +111,7 @@ async def openai_chat(request: Request) -> Response:
     body = await request.json()
     if isinstance(body.get("messages"), list):
         body["messages"] = seed_messages(body["messages"])
-    if ".openai.azure.com" in AZURE_API_BASE or ".azure-api.net" in AZURE_API_BASE:
+    if CLASSIC_DIALECT:
         deployment = body.pop("model", "")
         upstream = await client.post(
             f"{AZURE_API_BASE}/openai/deployments/{deployment}/chat/completions",

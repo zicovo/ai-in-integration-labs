@@ -74,17 +74,25 @@ if [ -n "${AZURE_API_KEY:-}" ] && [ -n "${AZURE_API_BASE:-}" ] && [ -n "$AZURE_D
         MODELS=/etc/litellm/models.hosted.yaml
         DIALECT="an OpenAI-compatible endpoint" ;;
     esac
+    # The classic dialect appends /openai/deployments/... itself, and the portal shows an APIM
+    # API's address ending in /openai, so an address pasted from there would double it. Take
+    # either form, so that a participant copies what they were shown and nothing has to be edited.
+    if [ "$MODELS" = /etc/litellm/models.azure.yaml ]; then
+      AZURE_API_BASE="${AZURE_API_BASE%/}"
+      AZURE_API_BASE="${AZURE_API_BASE%/openai}"
+      export AZURE_API_BASE
+    fi
     RUNTIME_DESCRIPTION="$DIALECT ($AZURE_API_BASE, deployment $AZURE_DEPLOYMENT)"
     echo "model gateway: using $DIALECT ($AZURE_API_BASE, deployment $AZURE_DEPLOYMENT)."
     echo "model gateway: the labs cost money on this path. The spend log is at /spend/logs."
   else
-    echo "model gateway: Azure OpenAI is configured but $AZURE_API_BASE did not answer."
+    echo "model gateway: the hosted model is configured but $AZURE_API_BASE did not answer."
     echo "model gateway: falling back to a local runtime, which is slower and free."
   fi
 elif [ -n "${AZURE_API_KEY:-}" ] || [ -n "${AZURE_API_BASE:-}" ]; then
   # Half-configured is worth saying out loud. Silence here is how a room ends up on the fallback
   # model without anyone noticing until a lab behaves differently from the instructor's run.
-  echo "model gateway: Azure OpenAI is only half configured, so it is not being used."
+  echo "model gateway: the hosted model is only half configured, so it is not being used."
   echo "model gateway: it needs AZURE_API_KEY, AZURE_API_BASE and AQUAFLUX_AZURE_DEPLOYMENT."
   echo "model gateway: labs/stack/.env.example lists all of them."
 fi
