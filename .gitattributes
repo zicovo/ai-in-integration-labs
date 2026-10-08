@@ -1,0 +1,11 @@
+# ADR-019. A shell script checked out with CRLF fails inside a Linux container with an unhelpful
+# error, so this lands before the first script does, not after.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pdf binary
+*.pptx binary
+*.potx binary
+*.docx binary
+*.xlsx binary
