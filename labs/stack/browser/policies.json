@@ -131,6 +131,10 @@
         "Value": false,
         "Status": "locked"
       }
+    },
+    "DNSOverHTTPS": {
+      "Enabled": false,
+      "Locked": true
     }
   }
 }

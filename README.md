@@ -17,10 +17,11 @@ Nothing here is installed on your machine by hand. Everything runs in Docker.
 - **VS Code** with the **Dev Containers** extension, or the dev container command line
   (`npx @devcontainers/cli`, which needs Node.js 22 or newer).
 - **Git**, and access to this repository.
-- **Internet access** for the first start: roughly 2 to 3 GB of images and models are downloaded
-  once. Do this before the session, not on shared wifi.
-- Optional: **a model key** from your instructor, which goes in `labs/stack/.env` (below). Without
-  one the labs run on a small local model, which is slower and works for every lab.
+- **Internet access** for the first start: the lab images are downloaded once. Do this before the
+  session if you can.
+- **A model key** from your instructor, which goes in `labs/stack/.env` (below). The labs use a
+  hosted model through it. Without a key you can run a small local model instead, but that is an
+  extra download of about 3 GB: `docker compose -f labs/stack/docker-compose.yml --profile local-model up -d ollama`.
 
 Apple Silicon Macs are supported: every image publishes an arm64 build.
 
@@ -31,7 +32,7 @@ git clone <this repository>
 cd <the folder it made>
 ```
 
-If your instructor gave you a model key, copy the example and fill it in:
+Copy the example and fill in the model key your instructor gave you:
 
 ```sh
 cp labs/stack/.env.example labs/stack/.env

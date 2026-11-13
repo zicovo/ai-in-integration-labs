@@ -220,6 +220,13 @@ check_model() {
   local_model="${local_model:-qwen2.5:3b-instruct}"
   case "$provider" in
     "the model runtime in the container"*)
+      # The local runtime is off by default (profile local-model, about 3 GB). Without a key in
+      # labs/stack/.env there is then no model at all: say what to do instead of failing later.
+      if ! "${COMPOSE[@]}" ps --status running --services 2>/dev/null | grep -qx ollama; then
+        bad "no model key in labs/stack/.env: copy labs/stack/.env.example to labs/stack/.env and fill in the key from your instructor, then run this smoke test again"
+        note "to use the local model instead (about 3 GB to download): docker compose -f labs/stack/docker-compose.yml --profile local-model up -d ollama"
+        return
+      fi
       if ! "${COMPOSE[@]}" exec -T ollama ollama list 2>/dev/null | grep -q "^${local_model}"; then
         note "no key in labs/stack/.env, so the labs run on the local model; pulling $local_model once (about 2 GB)"
         if "${COMPOSE[@]}" exec -T ollama ollama pull "$local_model" >/dev/null 2>&1; then

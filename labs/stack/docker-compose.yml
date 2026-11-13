@@ -92,7 +92,8 @@ services:
     ports:
       # For a browser on the host. It needs a hosts file entry to be useful, which is why the
       # lab browser exists; this is here for an instructor who wants their own browser.
-      - "8443:443"
+      # Set AQUAFLUX_HTTPS_HOST_PORT in labs/stack/.env when 8443 is taken on the host.
+      - "${AQUAFLUX_HTTPS_HOST_PORT:-8443}:443"
     networks:
       default:
         aliases:
@@ -171,9 +172,13 @@ services:
   # the runtime swappable: ADR-010 says it "makes the swap invisible to the labs", and
   # labs/stack/model-gateway/config.yaml is where that promise is kept.
 
+  # The local fallback model runtime, about 3 GB with its model. Off by default: with a key in
+  # labs/stack/.env the gateway and the seed go straight to the hosted model and never call it.
+  # Without a key, start it once with:
+  #   docker compose -f labs/stack/docker-compose.yml --profile local-model up -d ollama
   ollama:
     image: ollama/ollama:0.12.3
-    profiles: [model]
+    profiles: [local-model]
     restart: unless-stopped
     volumes:
       - ollama-models:/root/.ollama
@@ -204,6 +209,7 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+        required: false
     networks:
       default:
         aliases: [seed.aquaflux.internal]
@@ -247,6 +253,7 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+        required: false
       seed:
         condition: service_started
       db:
